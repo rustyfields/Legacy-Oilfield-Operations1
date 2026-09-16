@@ -1,0 +1,21 @@
+CrudeForce v1.14 Field Test Candidate
+
+Branding
+- Approved flag-based CrudeForce sign-in treatment.
+- CrudeForce charcoal / steel / burnt-orange UI palette.
+- Legacy Petroleum remains the company being accessed.
+- CrudeForce app/sidebar identity.
+- Full-color CrudeForce maker mark at bottom center of printed pages.
+- Legacy Petroleum watermark retained on printed reports.
+
+Reporting
+- System-wide print CSS hides navigation, top bar, buttons, modal/toast UI and app chrome.
+- Print output retains only report content, Legacy watermark, and CrudeForce footer mark.
+- Existing v1.13 calculated-production logic, operations summaries, date ranges, drill-down and back navigation retained.
+
+Data management retained from v1.13
+- Tank master add/edit/inactivate workflow.
+- Equipment records and operational master-data management currently available remain intact.
+
+Field-test note
+- Multi-company architecture and Terms acceptance gate remain deferred. This build stays single-company for Legacy Petroleum while field testing continues.
