@@ -217,7 +217,29 @@ async function loadRefs(){
  }
 }
 function leaseNameFrom(leases,id){return leases.find(x=>x.id===id)?.name||''}
-function renderNav(){const nav=$('#nav');nav.innerHTML='';for(const [id,label] of modules){if(id==='admin'&&profile?.role!=='admin')continue;const b=document.createElement('button');b.textContent=label;b.className=current===id?'active':'';b.onclick=()=>go(id,false);nav.appendChild(b)}}
+function navStorageKey(){return 'crudeforce_nav_order_'+(me?.id||'anon')}
+function orderedModules(){
+ let saved=[];try{saved=JSON.parse(localStorage.getItem(navStorageKey())||'[]')}catch{}
+ const visible=modules.filter(x=>x[0]!=='admin'||profile?.role==='admin');
+ const dashboard=visible.find(x=>x[0]==='dashboard');
+ const rest=visible.filter(x=>x[0]!=='dashboard');
+ rest.sort((a,b)=>{const ai=saved.indexOf(a[0]),bi=saved.indexOf(b[0]);return (ai<0?999:ai)-(bi<0?999:bi)});
+ return dashboard?[dashboard,...rest]:rest;
+}
+function renderNav(){
+ const nav=$('#nav');nav.innerHTML='';
+ for(const [id,label] of orderedModules()){const b=document.createElement('button');b.textContent=label;b.className=current===id?'active':'';b.onclick=()=>go(id,false);nav.appendChild(b)}
+ const arrange=document.createElement('button');arrange.textContent='Arrange Navigation';arrange.className='navArrange';arrange.onclick=openNavArrange;nav.appendChild(arrange);
+}
+function openNavArrange(){
+ const movable=orderedModules().filter(x=>x[0]!=='dashboard'&&x[0]!=='admin');
+ const rows=movable.map((x,i)=>'<div class="toolbar navOrderRow" data-id="'+x[0]+'" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0"><b>'+esc(x[1])+'</b><span><button type="button" class="btn navUp" data-id="'+x[0]+'">↑</button> <button type="button" class="btn navDown" data-id="'+x[0]+'">↓</button></span></div>').join('');
+ const m=$('#modal');m.innerHTML='<div class="modalbox"><div class="modalhead"><h2 style="margin:0">Arrange Navigation</h2><button class="btn" id="closeNavArrange">Close</button></div><div class="notice">Dashboard stays first. This order is saved for your user on this device.</div><div id="navOrderRows">'+rows+'</div><div class="actions"><button class="btn" id="resetNavOrder">Reset Default</button><button class="btn primary" id="doneNavArrange">Done</button></div></div>';m.classList.remove('hidden');
+ const close=()=>m.classList.add('hidden');$('#closeNavArrange').onclick=$('#doneNavArrange').onclick=close;
+ const move=(id,dir)=>{let arr=[...document.querySelectorAll('.navOrderRow')].map(x=>x.dataset.id),i=arr.indexOf(id),j=i+dir;if(i<0||j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]];localStorage.setItem(navStorageKey(),JSON.stringify(arr));renderNav();openNavArrange()};
+ document.querySelectorAll('.navUp').forEach(b=>b.onclick=()=>move(b.dataset.id,-1));document.querySelectorAll('.navDown').forEach(b=>b.onclick=()=>move(b.dataset.id,1));
+ $('#resetNavOrder').onclick=()=>{localStorage.removeItem(navStorageKey());renderNav();openNavArrange()};
+}
 async function go(id,preserveSubView=false){current=id;if((id==='tankgauges'||id==='oil')&&!preserveSubView)activeTankLeaseKey=null;renderNav();$('#pageTitle').textContent=modules.find(x=>x[0]===id)?.[1]||id;$('#content').innerHTML='<div class="panel">Loading…</div>';await loadRefs();if(id==='dashboard')return dashboard();if(id==='status')return listStatus();if(id==='workovers')return listWorkovers();if(id==='incidents')return listIncidents();if(id==='acid')return listAcid();if(id==='chemical')return listChemical();if(id==='oil')return listTankGauges();if(id==='tankgauges')return listTankGauges();if(id==='reports')return reportsHome();if(id==='equipment')return listEquipment();if(id==='wells')return listWells();if(id==='contractors')return listContractors();if(id==='admin')return listUsers()}
 function table(headers,rows){return `<div class="tablewrap"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}" class="empty">No records yet.</td></tr>`}</tbody></table></div>`}
 function openModal(title,body,onSave){const m=$('#modal');m.innerHTML=`<div class="modalbox"><div class="modalhead"><h2 style="margin:0">${esc(title)}</h2><button class="btn" id="closeModal">Close</button></div><form id="modalForm">${body}<div class="actions"><button class="btn" type="button" id="cancelModal">Cancel</button><button class="btn primary" type="submit">Save</button></div></form></div>`;m.classList.remove('hidden');$('#closeModal').onclick=$('#cancelModal').onclick=()=>m.classList.add('hidden');$('#modalForm').onsubmit=async e=>{e.preventDefault();try{await onSave(new FormData(e.target));m.classList.add('hidden');toast('Saved');await go(current,true)}catch(err){toast(err.message||String(err))}}}
