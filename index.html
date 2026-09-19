@@ -77,7 +77,7 @@ body{line-height:1.35}
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
 
-</style>
+.productionBanner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:1px solid rgba(232,111,24,.55);background:linear-gradient(135deg,#1c1e21,#292c30);border-radius:12px;padding:12px 15px;margin-bottom:14px}.productionBanner .prodTitle{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800}.productionBanner .prodValue{font-size:21px;font-weight:900}.productionBanner .prodMeta{font-size:12px;color:var(--muted)}.productionBanner .prodGroup{display:flex;gap:24px;align-items:center;flex-wrap:wrap}@media(max-width:600px){.productionBanner .prodGroup{gap:14px}.productionBanner .prodValue{font-size:18px}}</style>
 </head>
 <body><div id="offlineBar"></div><div id="turnDownAlertBar"></div>
 <div id="auth" class="authwrap">
@@ -222,14 +222,24 @@ async function go(id,preserveSubView=false){current=id;if((id==='tankgauges'||id
 function table(headers,rows){return `<div class="tablewrap"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}" class="empty">No records yet.</td></tr>`}</tbody></table></div>`}
 function openModal(title,body,onSave){const m=$('#modal');m.innerHTML=`<div class="modalbox"><div class="modalhead"><h2 style="margin:0">${esc(title)}</h2><button class="btn" id="closeModal">Close</button></div><form id="modalForm">${body}<div class="actions"><button class="btn" type="button" id="cancelModal">Cancel</button><button class="btn primary" type="submit">Save</button></div></form></div>`;m.classList.remove('hidden');$('#closeModal').onclick=$('#cancelModal').onclick=()=>m.classList.add('hidden');$('#modalForm').onsubmit=async e=>{e.preventDefault();try{await onSave(new FormData(e.target));m.classList.add('hidden');toast('Saved');await go(current,true)}catch(err){toast(err.message||String(err))}}}
 function options(items,val,label){return `<option value="">Select…</option>`+items.map(x=>`<option value="${x[val]}">${esc(label(x))}</option>`).join('')}
+async function productionSnapshot(days=1){
+ const end=new Date();end.setHours(23,59,59,999);const start=new Date();start.setDate(start.getDate()-(days-1));start.setHours(0,0,0,0);const prior=new Date(start);prior.setDate(prior.getDate()-2);
+ const [g,s,a]=await Promise.all([sb.from('tank_gauges').select('*').gte('gauged_at',prior.toISOString()).lte('gauged_at',end.toISOString()).order('gauged_at'),sb.from('oil_sales_pickups').select('*').gte('picked_up_at',start.toISOString()).lte('picked_up_at',end.toISOString()).eq('status','picked_up').is('deleted_at',null),sb.from('tank_adjustments').select('*').gte('adjustment_at',start.toISOString()).lte('adjustment_at',end.toISOString())]);
+ if(g.error||s.error||a.error)return {total:0,avg:0,complete:false,known:0,required:refs.tanks.filter(t=>t.active).length};
+ let total=0,known=0;const active=refs.tanks.filter(t=>t.active);
+ for(const t of active){const tg=(g.data||[]).filter(x=>x.tank_id===t.id).sort((x,y)=>new Date(x.gauged_at)-new Date(y.gauged_at));const begin=[...tg].filter(x=>new Date(x.gauged_at)<start).pop();const finish=[...tg].filter(x=>new Date(x.gauged_at)>=start&&new Date(x.gauged_at)<=end).pop();if(!begin||!finish)continue;const hauled=(s.data||[]).filter(x=>x.tank_id===t.id||(!x.tank_id&&String(x.tank_number)===String(t.tank_number))).reduce((n,x)=>n+Number(x.gross_bbl_hauled||0),0);const adj=(a.data||[]).filter(x=>x.tank_id===t.id&&['resolved','closed'].includes(x.status)).reduce((n,x)=>n+Number(x.calculated_total_volume_change_bbl||0),0);total+=Number(finish.calculated_bbl||0)+hauled+adj-Number(begin.calculated_bbl||0);known++;}
+ return {total:total,avg:total/Math.max(1,days),complete:known===active.length&&active.length>0,known:known,required:active.length};
+}
+function productionBanner(today,week){const flag=today.complete?'Daily Gauging Complete':'Incomplete / Estimated • '+today.known+' of '+today.required+' tanks calculated';return '<div class="productionBanner"><div><div class="prodTitle">Field Production</div><div class="prodMeta">'+flag+'</div></div><div class="prodGroup"><div><div class="prodTitle">Today\'s Production</div><div class="prodValue">'+today.total.toFixed(2)+' BBL</div></div><div><div class="prodTitle">7-Day Avg BOPD</div><div class="prodValue">'+week.avg.toFixed(2)+'</div></div></div></div>';}
 async function dashboard(){
+ const [todayProd,weekProd]=await Promise.all([productionSnapshot(1),productionSnapshot(7)]);
  const [wo,inc,oil,stat]=await Promise.all([
   sb.from('workovers').select('id,state',{count:'exact',head:true}),
   sb.from('incidents').select('id,operational_status',{count:'exact',head:true}),
   sb.from('oil_sales_pickups').select('id',{count:'exact',head:true}).is('deleted_at',null).eq('status','awaiting_pickup'),
   sb.from('status_events').select('id',{count:'exact',head:true})
  ]);
- $('#content').innerHTML=`<div class="grid">
+ $('#content').innerHTML=`${productionBanner(todayProd,weekProd)}<div class="grid">
  <div class="card metric clickable dashMetric" data-kind="workovers"><div class="label">Workovers</div><div class="value">${wo.count||0}</div><div class="hint">Tap to see records</div></div>
  <div class="card metric clickable dashMetric" data-kind="incidents"><div class="label">Incidents</div><div class="value">${inc.count||0}</div><div class="hint">Tap to see records</div></div>
  <div class="card metric clickable dashMetric" data-kind="tanks"><div class="label">Tanks Awaiting Pickup</div><div class="value">${oil.count||0}</div><div class="hint">Tap to see which tanks</div></div>
@@ -497,8 +507,7 @@ function purchaserSelect(current=''){
  const active=(refs.purchasers||[]).filter(p=>p.active);
  const cur=String(current||'');
  const has=active.some(p=>p.name===cur);
- const extra=cur&&!has?`<option value="${esc(cur)}" selected>${esc(cur)} (historical)</option>`:''; return `<option value="">Select purchaser…</option>`+active.map(p=>`<option value="${esc(p.name)}"${selected(cur,p.name)}>${esc(p.name)}</option>`).join('')+extra;
-}
+ const extra=cur&&!has?`<option value="${esc(cur)}" selected>${esc(cur)} (historical)</option>`:''; return `<option value="">Select purchaser…</option>`+active.map(p=>`<option value="${esc(p.name)}"${selected(cur,p.name)}>${esc(p.name)}</option>`).join('')+extra;}
 function tankCallInForm(t={},x={}){
  return `<div class="formgrid">
  <div class="field full"><label>Tank</label><input value="${esc(tankMasterLabel(t))}" disabled></div>
@@ -997,8 +1006,7 @@ function tankGaugeStatusForLease(tanks=[]){
      if(t.capacity_bbl!=null && Number(t.capacity_bbl)>0 && Number(g.calculated_bbl)/Number(t.capacity_bbl)>=.9)nearlyFull=true;
    }
  } return {latest,total,known,nearlyFull}
-}
-function bindTankAdmin(){
+}function bindTankAdmin(){
  document.querySelectorAll('.editTankMaster').forEach(b=>b.onclick=()=>editTankMaster(b.dataset.id));
  const a=$('#newTankMasterGauge');if(a)a.onclick=()=>openModal('Add lease / tank configuration',tankMasterForm({active:true}),async f=>{const o=tankMasterPayload(f);o.created_by=me.id;const {error}=await sb.from('tanks').insert(o);if(error)throw error;await loadRefs()});
 }
@@ -1057,7 +1065,8 @@ function renderTankLease(key){
  document.querySelectorAll('.addTankHaul').forEach(b=>b.onclick=()=>openTankPickup(b.dataset.id));
  bindOilDeleteActions();
 }
-function renderTankGaugeLanding(){
+async function renderTankGaugeLanding(){
+ const [todayProd,weekProd]=await Promise.all([productionSnapshot(1),productionSnapshot(7)]);
  const active=refs.tanks.filter(t=>t.active);
  const groups={};for(const t of active){(groups[tankLeaseKey(t)]??=[]).push(t)}
  const groupCards=Object.entries(groups).sort((a,b)=>naturalCompare(tankLeaseLabelFromKey(a[0]),tankLeaseLabelFromKey(b[0]))).map(([key,tanks])=>{
@@ -1075,7 +1084,7 @@ function renderTankGaugeLanding(){
      </div>${transportLine}${turnDownLine}${alert}
    </div>`
  }).join('');
- $('#content').innerHTML=`${adminDeleteRequestPanel()}${unresolvedTurnDownPanel()}<div class="panel"><div class="notice"><b>Tank Gauging / Oil Inventory:</b> Leases and batteries are grouped here. Open a lease to enter gauges, call tanks in, document turn-down/material-removal events, and record oil hauls/run tickets. The previous saved gauge carries forward automatically.</div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">${groupCards||'<div class="panel"><div class="empty">No active tanks configured yet.</div></div>'}</div>${tankAdminPanel()}${materialTypeAdminPanel()}`;
+ $('#content').innerHTML=`${adminDeleteRequestPanel()}${unresolvedTurnDownPanel()}${productionBanner(todayProd,weekProd)}<div class="panel"><div class="notice"><b>Tank Gauging / Oil Inventory:</b> Leases and batteries are grouped here. Open a lease to enter gauges, call tanks in, document turn-down/material-removal events, and record oil hauls/run tickets. The previous saved gauge carries forward automatically.</div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">${groupCards||'<div class="panel"><div class="empty">No active tanks configured yet.</div></div>'}</div>${tankAdminPanel()}${materialTypeAdminPanel()}`;
  document.querySelectorAll('.openTankLease').forEach(b=>b.onclick=()=>renderTankLease(decodeURIComponent(b.dataset.key)));
  document.querySelectorAll('.resolveTurnDown').forEach(b=>b.onclick=()=>openTankAdjustment(b.dataset.tank));
  bindTankAdmin();
@@ -1094,7 +1103,7 @@ async function listTankGauges(){
  tankAdjustmentCache=adjustments||[];
  tankGaugeHistoryCache={};
  for(const g of data){(tankGaugeHistoryCache[g.tank_id]??=[]).push(g)}
- if(activeTankLeaseKey)renderTankLease(activeTankLeaseKey);else renderTankGaugeLanding();
+ if(activeTankLeaseKey)renderTankLease(activeTankLeaseKey);else await renderTankGaugeLanding();
  await refreshTurnDownAlerts();
 }
 function tankMasterForm(x={}){return `<div class="formgrid">
