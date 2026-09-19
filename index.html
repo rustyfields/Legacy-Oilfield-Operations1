@@ -54,7 +54,7 @@ body{line-height:1.35}
 .logo-note{display:flex;align-items:center;gap:10px}.logo-note img{width:56px;height:56px;object-fit:contain}
 
 
-/* v1.14 CrudeForce branding */
+/* v1.15 CrudeForce branding */
 .authwrap{background:linear-gradient(rgba(5,5,5,.20),rgba(5,5,5,.42)),url('/crudeforce-login-flag.png') center/cover fixed no-repeat;position:relative}
 .authwrap:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,transparent 15%,rgba(0,0,0,.38) 100%);pointer-events:none}
 .authbox{position:relative;z-index:1;background:rgba(18,19,21,.88);border-color:rgba(232,111,24,.48);backdrop-filter:blur(9px);box-shadow:0 25px 70px #000b}
@@ -83,7 +83,7 @@ body{line-height:1.35}
 <div id="auth" class="authwrap">
   <div class="authbox">
     <img class="cf-login-logo" src="/crudeforce-logo.png" alt="CrudeForce">
-    <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700">App v1.14 • Field Test</div>
+    <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700">App v1.15 • Field Test</div>
     <form id="authForm">
       <div class="field"><label>Email</label><input id="authEmail" type="email" required autocomplete="username"></div>
       <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"></div>
@@ -96,18 +96,18 @@ body{line-height:1.35}
 
 <div id="app" class="shell hidden">
   <aside class="sidebar">
-    <div class="brandrow"><img class="brandmark" src="/crudeforce-icon.png" alt=""><div class="brand">CrudeForce<small>Legacy Petroleum • v1.14</small></div></div>
+    <div class="brandrow"><img class="brandmark" src="/crudeforce-icon.png" alt=""><div class="brand">CrudeForce<small>Legacy Petroleum • v1.15</small></div></div>
     <nav class="nav" id="nav"></nav>
   </aside>
   <main class="main">
-    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userbox"><div id="who"></div><div class="small" style="margin-top:4px;color:var(--accent)">v1.14</div><button id="signout" class="btn" style="margin-top:6px;padding:5px 9px">Sign out</button></div></div>
+    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userbox"><div id="who"></div><div class="small" style="margin-top:4px;color:var(--accent)">v1.15</div><button id="signout" class="btn" style="margin-top:6px;padding:5px 9px">Sign out</button></div></div>
     <div id="content"></div>
   </main>
 </div>
 <div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION='1.14';
+const APP_VERSION='1.15';
 
 const OFFLINE_DB='legacy-oilfield-offline-v1', OFFLINE_STORE='pending_mutations', OFFLINE_CACHE='reference_cache';
 let offlineDbPromise=null, syncBusy=false;
@@ -497,8 +497,7 @@ function purchaserSelect(current=''){
  const active=(refs.purchasers||[]).filter(p=>p.active);
  const cur=String(current||'');
  const has=active.some(p=>p.name===cur);
- const extra=cur&&!has?`<option value="${esc(cur)}" selected>${esc(cur)} (historical)</option>`:'';
- return `<option value="">Select purchaser…</option>`+active.map(p=>`<option value="${esc(p.name)}"${selected(cur,p.name)}>${esc(p.name)}</option>`).join('')+extra;
+ const extra=cur&&!has?`<option value="${esc(cur)}" selected>${esc(cur)} (historical)</option>`:''; return `<option value="">Select purchaser…</option>`+active.map(p=>`<option value="${esc(p.name)}"${selected(cur,p.name)}>${esc(p.name)}</option>`).join('')+extra;
 }
 function tankCallInForm(t={},x={}){
  return `<div class="formgrid">
@@ -645,7 +644,7 @@ async function listOil(){
    const gross=x.gross_bbl_hauled==null?'':Number(x.gross_bbl_hauled).toFixed(2);
    return `<tr><td><button class="btn editOil" data-id="${x.id}">Open / Edit</button> ${oilSaleDeleteAction(x)}</td><td>${esc(oilBatteryLabel(x))}</td><td>${esc(x.tank_number)}</td><td>${esc(x.purchaser||'')}</td><td>${esc(x.confirmation_number||'')}</td><td>${x.called_in_at?new Date(x.called_in_at).toLocaleString():''}</td><td>${x.picked_up_at?new Date(x.picked_up_at).toLocaleString():''}</td><td>${gross}</td><td>${badge(x.status)}</td><td>${delay}</td></tr>`;
  });
- const now=new Date(), day=(now.getDay()+6)%7;
+ const now=new Date(), day=(now.getDay()+1)%7;
  const weekStart=new Date(now);weekStart.setHours(0,0,0,0);weekStart.setDate(now.getDate()-day);
  const weekEnd=new Date(weekStart);weekEnd.setDate(weekStart.getDate()+7);
  const weekly=data.filter(x=>x.picked_up_at&&new Date(x.picked_up_at)>=weekStart&&new Date(x.picked_up_at)<weekEnd&&x.gross_bbl_hauled!=null);
@@ -997,8 +996,7 @@ function tankGaugeStatusForLease(tanks=[]){
      total+=Number(g.calculated_bbl||0);known++;
      if(t.capacity_bbl!=null && Number(t.capacity_bbl)>0 && Number(g.calculated_bbl)/Number(t.capacity_bbl)>=.9)nearlyFull=true;
    }
- }
- return {latest,total,known,nearlyFull}
+ } return {latest,total,known,nearlyFull}
 }
 function bindTankAdmin(){
  document.querySelectorAll('.editTankMaster').forEach(b=>b.onclick=()=>editTankMaster(b.dataset.id));
@@ -1120,7 +1118,7 @@ let reportState={type:'production',period:'weekly',from:'',to:'',lease_id:'',wel
 function ymd(d){const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`}
 function reportRange(period,anchor=new Date()){
  const d=new Date(anchor);d.setHours(12,0,0,0);let a=new Date(d),b=new Date(d);
- if(period==='weekly'){const day=(d.getDay()+6)%7;a.setDate(d.getDate()-day);b=new Date(a);b.setDate(a.getDate()+6)}
+ if(period==='weekly'){const day=(d.getDay()+1)%7;a.setDate(d.getDate()-day);b=new Date(a);b.setDate(a.getDate()+6)}
  else if(period==='monthly'){a=new Date(d.getFullYear(),d.getMonth(),1,12);b=new Date(d.getFullYear(),d.getMonth()+1,0,12)}
  else if(period==='yearly'){a=new Date(d.getFullYear(),0,1,12);b=new Date(d.getFullYear(),11,31,12)}
  return {from:ymd(a),to:ymd(b)};
@@ -1261,7 +1259,7 @@ if('serviceWorker' in navigator) window.addEventListener('load',async()=>{
   }catch(e){console.warn('Service worker update failed',e)}
   try{
     const keys=await caches.keys();
-    await Promise.all(keys.filter(k=>k!=='oilfield-ops-v113').map(k=>caches.delete(k)));
+    await Promise.all(keys.filter(k=>k!=='oilfield-ops-v115').map(k=>caches.delete(k)));
   }catch(e){console.warn('Cache cleanup failed',e)}
 });
 
