@@ -1037,7 +1037,7 @@ function tankAdminPanel(){
 }
 function renderTankLease(key){
  activeTankLeaseKey=key;
- const tanks=refs.tanks.filter(t=>t.active && tankLeaseKey(t)===key).sort((a,b)=>naturalCompare(a.tank_number,b.tank_number));
+ const orderKey='crudeforce_tank_order_'+key; let savedOrder=[];try{savedOrder=JSON.parse(localStorage.getItem(orderKey)||'[]')}catch{} const tanks=refs.tanks.filter(t=>t.active && tankLeaseKey(t)===key).sort((a,b)=>{const ai=savedOrder.indexOf(a.id),bi=savedOrder.indexOf(b.id);if(ai>=0||bi>=0)return (ai<0?999:ai)-(bi<0?999:bi);return naturalCompare(a.tank_number,b.tank_number)});
  const cards=tanks.map(t=>{
    const hist=tankGaugeHistoryCache[t.id]||[], current=hist[0], previous=hist[1];
    const currentBbl=current?Number(current.calculated_bbl):null;
