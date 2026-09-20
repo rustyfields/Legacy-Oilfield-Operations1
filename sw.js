@@ -1,4 +1,4 @@
-const CACHE='crudeforce-v115-hotfix2';
+const CACHE='crudeforce-v115-hotfix3';
 const ASSETS=['/','/index.html','/legacy-logo.png','/crudeforce-login-flag.png','/crudeforce-logo.png','/crudeforce-icon.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{}))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
