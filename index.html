@@ -1161,17 +1161,24 @@ function reportDateControls(){let r=reportState.period==='custom'?{from:reportSt
  <div class="field"><label>Well</label><select id="rWell"><option value="">All</option>${refs.wells.filter(w=>!reportState.lease_id||w.lease_id===reportState.lease_id).map(w=>`<option value="${w.id}"${selected(reportState.well_id,w.id)}>${esc(wellName(w.id))}</option>`).join('')}</select></div>
  </div>`}
 function reportsHome(){
- $('#content').innerHTML=`<div class="panel"><h2>Reports</h2><div class="notice">Choose a report and period. Daily, Weekly, Monthly and Yearly populate the date range automatically. Use Custom when you need exact From / To dates.</div>${reportDateControls()}<div class="toolbar" style="margin-top:12px"><button class="btn primary" id="runReport">View Results</button></div></div>`;
+ $('#content').innerHTML=`<div class="panel"><h2>Reports</h2><div class="notice">Choose a report and period. Daily, Weekly, Monthly and Yearly populate the date range automatically. Use Custom when you need exact From / To dates.</div>${reportDateControls()}<div class="toolbar" style="margin-top:12px"><button class="btn primary" id="runReport" type="button">View Results</button></div></div>`;
  const sync=()=>{reportState.type=$('#rType').value;reportState.period=$('#rPeriod').value;reportState.from=$('#rFrom').value;reportState.to=$('#rTo').value;reportState.lease_id=$('#rLease').value;reportState.well_id=$('#rWell').value};
  $('#rPeriod').onchange=()=>{sync();reportsHome()};$('#rType').onchange=sync;$('#rLease').onchange=()=>{sync();reportsHome()};$('#rWell').onchange=sync;$('#rFrom').onchange=sync;$('#rTo').onchange=sync;
  const runBtn=$('#runReport');
- if(runBtn)runBtn.addEventListener('click',async e=>{
-  e.preventDefault();sync();
-  if(!reportState.from||!reportState.to){toast('Select a report date range.');return}
-  if(reportState.from>reportState.to){toast('Report From date must be before To date.');return}
-  const oldText=runBtn.textContent;runBtn.disabled=true;runBtn.textContent='Loading report…';
-  try{await runReport()}catch(err){console.error('Report generation failed',err);toast('Report failed to load: '+(err?.message||'Unknown error'));runBtn.disabled=false;runBtn.textContent=oldText}
- });
+ runBtn.onclick=async function(e){
+  e.preventDefault();e.stopPropagation();sync();
+  if(!reportState.from||!reportState.to)return toast('Select a report date range.');
+  if(reportState.from>reportState.to)return toast('Report From date must be before To date.');
+  runBtn.disabled=true;runBtn.textContent='Loading report…';
+  try{
+   await runReport();
+   if(document.body.contains(runBtn)){runBtn.disabled=false;runBtn.textContent='View Results'}
+  }catch(err){
+   console.error('Report generation failed',err);
+   toast('Report failed: '+(err&&err.message?err.message:String(err)));
+   if(document.body.contains(runBtn)){runBtn.disabled=false;runBtn.textContent='View Results'}
+  }
+ };
 }
 function reportHeader(title){return `<div class="toolbar"><button class="btn" onclick="reportsHome()">← Back to Reports</button></div><div class="reportBrand"><h2>${esc(title)}</h2><div class="small">Legacy Petroleum • ${esc(reportState.from)} through ${esc(reportState.to)}</div></div>`}
 function reportBottom(){return `<div class="toolbar" style="margin-top:16px"><button class="btn" onclick="reportsHome()">← Back to Reports</button><button class="btn primary" onclick="window.print()">Print / Save PDF</button></div>`}
