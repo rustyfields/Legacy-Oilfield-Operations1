@@ -1183,8 +1183,7 @@ function reportsHome(){
 function reportHeader(title){return `<div class="toolbar"><button class="btn" onclick="reportsHome()">← Back to Reports</button></div><div class="reportBrand"><h2>${esc(title)}</h2><div class="small">Legacy Petroleum • ${esc(reportState.from)} through ${esc(reportState.to)}</div></div>`}
 function printCurrentReport(){
  try{
-  window.focus();
-  setTimeout(()=>window.print(),50);
+  window.print();
  }catch(err){
   console.error('Print failed',err);
   toast('Print failed: '+(err?.message||'Browser print dialog could not open.'));
