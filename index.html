@@ -1183,10 +1183,21 @@ function reportsHome(){
 function reportHeader(title){return `<div class="toolbar"><button class="btn" onclick="reportsHome()">← Back to Reports</button></div><div class="reportBrand"><h2>${esc(title)}</h2><div class="small">Legacy Petroleum • ${esc(reportState.from)} through ${esc(reportState.to)}</div></div>`}
 function printCurrentReport(){
  try{
-  window.print();
+  const panel=document.querySelector('#content .panel');
+  if(!panel)return toast('No report is open to print.');
+  const report=panel.cloneNode(true);
+  report.querySelectorAll('.toolbar,button').forEach(x=>x.remove());
+  const title=(report.querySelector('h2')?.textContent||'CrudeForce Report').trim();
+  const w=window.open('','_blank');
+  if(!w)return toast('iPhone blocked the printable report window. Allow pop-ups for this site and try again.');
+  w.document.open();
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#111;background:#fff;margin:0;padding:24px}h2,h3{page-break-after:avoid}table{width:100%;border-collapse:collapse;margin:10px 0 18px}th,td{border:1px solid #bbb;padding:6px;text-align:left;vertical-align:top;font-size:12px}.small,.hint,.muted{font-size:11px}.card,.notice{border:1px solid #bbb;padding:10px;margin:10px 0}.value{font-size:22px;font-weight:700}.reportBrand{border-bottom:1px solid #777;padding-bottom:8px;margin-bottom:12px}@media print{body{padding:0}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}}</style></head><body>'+report.innerHTML+'<div style="text-align:center;margin-top:24px;font-size:10px">CrudeForce • FIELD DATA. REAL FORCE.</div></body></html>');
+  w.document.close();
+  w.focus();
+  toast('Printable report opened. Use Safari Share → Print, then save as PDF.');
  }catch(err){
-  console.error('Print failed',err);
-  toast('Print failed: '+(err?.message||'Browser print dialog could not open.'));
+  console.error('Printable report failed',err);
+  toast('Printable report failed: '+(err?.message||String(err)));
  }
 }
 function reportBottom(){return `<div class="toolbar" style="margin-top:16px"><button class="btn" type="button" onclick="reportsHome()">← Back to Reports</button><button class="btn primary" type="button" onclick="printCurrentReport()">Print / Save PDF</button></div>`}
