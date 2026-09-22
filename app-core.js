@@ -149,3 +149,51 @@ let refs = {
   purchasers: []
 };
 let activeTankLeaseKey = null;
+async function syncPendingMutations() {
+  if (syncBusy || !navigator.onLine || !me) return;
+  syncBusy = true;
+  try {
+    const pending = (await idbAll(OFFLINE_STORE)).filter(
+      x => x.status === 'pending' || x.status === 'conflict'
+    );
+    for (const item of pending) {
+      try {
+        let result;
+        if (item.action === 'insert') {
+          result = await sb.from(item.table).insert(item.payload);
+        } else if (item.action === 'update') {
+          let q = sb.from(item.table).update(item.payload);
+          if (item.match) {
+            Object.entries(item.match).forEach(([k, v]) => {
+              q = q.eq(k, v);
+            });
+          }
+          result = await q;
+        } else if (item.action === 'delete') {
+          let q = sb.from(item.table).delete();
+          if (item.match) {
+            Object.entries(item.match).forEach(([k, v]) => {
+              q = q.eq(k, v);
+            });
+          }
+          result = await q;
+        }
+        if (result?.error) throw result.error;
+        await idbDelete(OFFLINE_STORE, item.id);
+      } catch (err) {
+        console.warn('Sync failed for', item.id, err);
+        item.status = 'conflict';
+        item.attempts = (item.attempts || 0) + 1;
+        item.last_error = String(err?.message || err);
+        await idbPut(OFFLINE_STORE, item);
+      }
+    }
+    await updateOfflineBar(pending.length ? 'Sync complete' : '');
+  } finally {
+    syncBusy = false;
+  }
+}
+
+setTimeout(async () => {
+  await updateOfflineBar();
+  if (navigator.onLine) await syncPendingMutations();    
