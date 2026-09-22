@@ -2,41 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#171717" />
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <title>CrudeForce | Legacy Petroleum</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CrudeForce | Restore in Progress</title>
+  <style>
+    body { margin:0; font-family: system-ui, sans-serif; background:#0b0c0e; color:#f2f2f0; display:grid; place-items:center; min-height:100vh; padding:24px; }
+    .box { max-width:480px; background:#17191c; border:1px solid #3b3f45; border-radius:14px; padding:28px; text-align:center; }
+    h1 { margin:0 0 12px; font-size:22px; }
+    p { color:#a8aaad; line-height:1.5; margin:0 0 18px; }
+    .accent { color:#e86f18; font-weight:700; }
+    code { background:#222; padding:2px 6px; border-radius:4px; font-size:13px; }
+  </style>
 </head>
 <body>
-<div id="offlineBar"></div><div id="turnDownAlertBar"></div>
-<div id="auth" class="authwrap">
-  <div class="authbox">
-    <img class="cf-login-logo" src="/crudeforce-logo.png" alt="CrudeForce">
-    <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700">App v1.15 • Field Test</div>
-    <form id="authForm">
-      <div class="field"><label>Email</label><input id="authEmail" type="email" required autocomplete="username"></div>
-      <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"></div>
-      <label class="small" style="display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--muted)"><input id="rememberEmail" type="checkbox" style="width:auto" checked> Remember email on this device</label>
-      <div class="actions" style="justify-content:stretch"><button class="btn primary" style="flex:1" type="submit">Sign in</button><button id="signupBtn" class="btn" style="flex:1" type="button">Create account</button></div>
-    </form>
-    <p class="small muted">The first account created becomes the administrator. Later users can be assigned roles and lease access.</p>
+  <div class="box">
+    <h1>CrudeForce</h1>
+    <p>Cleanup hit a file-size limit while splitting the code.</p>
+    <p class="accent">The full working version is being restored.</p>
+    <p style="font-size:14px">Last known good commit:<br><code>c77d775</code></p>
+    <p style="font-size:13px;color:#888">You can also restore it yourself in GitHub by reverting to that commit if needed.</p>
   </div>
-</div>
-
-<div id="app" class="shell hidden">
-  <aside class="sidebar">
-    <div class="brandrow"><img class="brandmark" src="/crudeforce-icon.png" alt=""><div class="brand">CrudeForce<small>Legacy Petroleum • v1.15</small></div></div>
-    <nav class="nav" id="nav"></nav>
-  </aside>
-  <main class="main">
-    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userbox"><div id="who"></div><div class="small" style="margin-top:4px;color:var(--accent)">v1.15</div><button id="signout" class="btn" style="margin-top:6px;padding:5px 9px">Sign out</button></div></div>
-    <div id="content"></div>
-  </main>
-</div>
-<div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/app-part1.js"></script>
-<script src="/app-part2.js"></script>
 </body>
 </html>
