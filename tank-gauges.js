@@ -1,5 +1,6 @@
 /* CrudeForce Tank Gauges module v1.16.14 */
 function tankLeaseKey(t={}){return `${t.lease_name||''}|||${t.lease_number||''}`}
+function tankLeaseLabelFromKey(key=''){const [name,num]=key.split('|||');return `${name||''}${num?' #'+num:''}`}
 function renderTankLease(key){
  activeTankLeaseKey=key;
  const tanks=refs.tanks.filter(t=>t.active && tankLeaseKey(t)===key).sort((a,b)=>naturalCompare(a.tank_number,b.tank_number));
