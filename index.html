@@ -115,8 +115,7 @@ body{background:radial-gradient(circle at 82% 8%,rgba(232,111,24,.07),transparen
       <label class="small" style="display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--muted)"><input id="rememberEmail" type="checkbox" style="width:auto" checked> Remember email on this device</label>
       <div class="actions" style="justify-content:stretch"><button class="btn primary" style="flex:1" type="submit">Sign in</button></div>
     </form>
-    <div class="actions" style="justify-content:stretch;margin-top:10px"><button id="signupBtn" class="btn" style="flex:1" type="button">Create account</button></div>
-    <p class="small muted">The first account created becomes the administrator. Later users can be assigned roles and lease access.</p>
+    <p class="small muted">Use your existing CrudeForce account to sign in.</p>
   </div>
 </div>
 
@@ -1302,10 +1301,6 @@ function saveRememberedEmail(){const email=$('#authEmail').value.trim();if($('#r
 function loadRememberedEmail(){const email=localStorage.getItem(REMEMBERED_EMAIL_KEY);if(email){$('#authEmail').value=email;$('#rememberEmail').checked=true}}
 loadRememberedEmail();
 $('#authForm').onsubmit=async e=>{e.preventDefault();saveRememberedEmail();const {error}=await sb.auth.signInWithPassword({email:$('#authEmail').value.trim(),password:$('#authPassword').value});if(error)toast(error.message)};
-$('#signupBtn').onclick=()=>modal('<h2>Create Account</h2><form id="signupForm" autocomplete="off"><div class="field"><label>Email</label><input id="signupEmail" name="signup-email" type="email" inputmode="email" autocapitalize="none" spellcheck="false" required autocomplete="off" value="'+esc($('#authEmail').value.trim())+'"></div><div class="field" style="margin-top:10px"><label>New Password</label><input id="signupPassword" name="new-password" type="password" minlength="6" required autocomplete="new-password"></div><div class="actions"><button class="btn primary" type="submit">Create account</button><button class="btn" type="button" id="cancelSignup">Cancel</button></div></form>');
-$('#cancelSignup').onclick=closeModal;
-$('#signupForm').onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.signUp({email:$('#signupEmail').value.trim(),password:$('#signupPassword').value});if(error)toast(error.message);else{closeModal();toast('Account created. Check email if confirmation is enabled.')}};
-};
 $('#signout').onclick=()=>sb.auth.signOut();
 async function sessionChanged(session){if(!session){me=profile=null;$('#auth').classList.remove('hidden');$('#app').classList.add('hidden');return}me=session.user;$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');await loadProfile();await loadRefs();renderNav();await go(current)}
 sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>sessionChanged(s),0));sb.auth.getSession().then(({data})=>sessionChanged(data.session));
