@@ -1332,7 +1332,7 @@ loadRememberedEmail();
 $('#authForm').onsubmit=async e=>{e.preventDefault();saveRememberedEmail();const {error}=await sb.auth.signInWithPassword({email:$('#authEmail').value.trim(),password:$('#authPassword').value});if(error)toast(error.message)};
 $('#signupBtn').onclick=async()=>{saveRememberedEmail();const {error}=await sb.auth.signUp({email:$('#authEmail').value.trim(),password:$('#authPassword').value});if(error)toast(error.message);else toast('Account created. Check email if confirmation is enabled.')};
 $('#signout').onclick=()=>sb.auth.signOut();
-async function sessionChanged(session){setupGlobalSearch();setupBottomNav();if(!session){me=profile=null;$('#auth').classList.remove('hidden');$('#app').classList.add('hidden');return}me=session.user;$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');await loadProfile();await loadRefs();renderNav();await go(current)}
+async function sessionChanged(session){if(!session){me=profile=null;$('#auth').classList.remove('hidden');$('#app').classList.add('hidden');return}me=session.user;$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');try{await loadProfile();await loadRefs();renderNav();setupGlobalSearch();setupBottomNav();await go(current)}catch(e){console.error('Post-login initialization failed',e);toast('Signed in, but app setup failed: '+(e.message||String(e)))}}
 sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>sessionChanged(s),0));sb.auth.getSession().then(({data})=>sessionChanged(data.session));
 if('serviceWorker' in navigator) window.addEventListener('load',async()=>{
   try{
