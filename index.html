@@ -54,7 +54,7 @@ body{line-height:1.35}
 .logo-note{display:flex;align-items:center;gap:10px}.logo-note img{width:56px;height:56px;object-fit:contain}
 
 
-/* v1.15 CrudeForce branding */
+/* v1.16 CrudeForce branding */
 .authwrap{background:linear-gradient(rgba(5,5,5,.20),rgba(5,5,5,.42)),url('/crudeforce-login-flag.png') center/cover fixed no-repeat;position:relative}
 .authwrap:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,transparent 15%,rgba(0,0,0,.38) 100%);pointer-events:none}
 .authbox{position:relative;z-index:1;background:rgba(18,19,21,.88);border-color:rgba(232,111,24,.48);backdrop-filter:blur(9px);box-shadow:0 25px 70px #000b}
@@ -77,13 +77,44 @@ body{line-height:1.35}
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
 
+
+/* v1.16 Field UX */
+:root{--warn:#f59e0b;--info:#38bdf8}
+.quickbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.searchbox{position:relative;min-width:min(360px,48vw)}
+.searchbox input{padding-left:36px;background:#111315;border-color:#4a4e55}
+.searchbox:before{content:"⌕";position:absolute;left:12px;top:8px;color:var(--muted);font-size:20px}
+.searchresults{position:absolute;z-index:60;top:44px;left:0;right:0;background:#17191c;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 50px #000b;max-height:55vh;overflow:auto}
+.searchresult{display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text)}
+.searchresult:last-child{border-bottom:0}.searchresult:hover{background:var(--panel2)}
+.searchresult b{display:block}.searchresult small{color:var(--muted)}
+.opsgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.attn{border-left:4px solid var(--warn)}.attn.bad{border-left-color:var(--bad)}.attn.good{border-left-color:var(--good)}
+.sectiontitle{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.filterbar input,.filterbar select{width:auto;min-width:150px}
+.mobilecards{display:none}.recordcard{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:9px}
+.recordcard .rc-title{font-size:16px;font-weight:800}.recordcard .rc-meta{font-size:12px;color:var(--muted);margin:4px 0 9px}.recordcard .rc-actions{display:flex;gap:7px;flex-wrap:wrap}
+.tankfill{height:9px;background:#0d0f11;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-top:6px}.tankfill>span{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444)}
+.bottomnav{display:none}
+@media(max-width:900px){
+ .sidebar{padding:8px 10px}.brandrow{justify-content:center}.sidebar .nav{display:none}
+ .main{padding-bottom:82px}.topbar{position:sticky;top:0;z-index:35;background:rgba(11,12,14,.94);backdrop-filter:blur(10px);padding:8px 0;margin-bottom:12px}
+ .topbar{flex-wrap:wrap}.searchbox{order:3;width:100%;min-width:100%}
+ .bottomnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:45;background:#15171a;border-top:1px solid var(--line);padding:5px max(5px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(5px,env(safe-area-inset-left));box-shadow:0 -8px 30px #0008}
+ .bottomnav button{border:0;background:transparent;color:var(--muted);padding:7px 2px;font-size:11px;font-weight:800;border-radius:9px}.bottomnav button.active{color:var(--accent);background:#282a2e}
+ .bottomnav .ico{display:block;font-size:19px;line-height:20px;margin-bottom:2px}
+ .opsgrid{grid-template-columns:1fr 1fr}
+ .desktopTable{display:none!important}.mobilecards{display:block}
+}
+@media(max-width:520px){.opsgrid{grid-template-columns:1fr}.userbox #who{display:none}.userbox .small{display:none}.topbar h1{font-size:19px}}
+
 </style>
 </head>
 <body><div id="offlineBar"></div><div id="turnDownAlertBar"></div>
 <div id="auth" class="authwrap">
   <div class="authbox">
     <img class="cf-login-logo" src="/crudeforce-logo.png" alt="CrudeForce">
-    <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700">App v1.15 • Field Operations Update</div>
+    <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700">App v1.16 • Field Operations Update</div>
     <form id="authForm">
       <div class="field"><label>Email</label><input id="authEmail" type="email" required autocomplete="username"></div>
       <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"></div>
@@ -96,18 +127,25 @@ body{line-height:1.35}
 
 <div id="app" class="shell hidden">
   <aside class="sidebar">
-    <div class="brandrow"><img class="brandmark" src="/crudeforce-icon.png" alt=""><div class="brand">CrudeForce<small>Legacy Petroleum • v1.15</small></div></div>
+    <div class="brandrow"><img class="brandmark" src="/crudeforce-icon.png" alt=""><div class="brand">CrudeForce<small>Legacy Petroleum • v1.16</small></div></div>
     <nav class="nav" id="nav"></nav>
   </aside>
   <main class="main">
-    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userbox"><div id="who"></div><div class="small" style="margin-top:4px;color:var(--accent)">v1.15</div><button id="signout" class="btn" style="margin-top:6px;padding:5px 9px">Sign out</button></div></div>
+    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="searchbox"><input id="globalWellSearch" placeholder="Find a well…"><div id="globalSearchResults" class="searchresults hidden"></div></div><div class="userbox"><div id="who"></div><div class="small" style="margin-top:4px;color:var(--accent)">v1.16</div><button id="signout" class="btn" style="margin-top:6px;padding:5px 9px">Sign out</button></div></div>
     <div id="content"></div>
   </main>
+  <div class="bottomnav" id="bottomnav">
+    <button data-go="dashboard"><span class="ico">⌂</span>Home</button>
+    <button data-go="status"><span class="ico">✓</span>Ops</button>
+    <button data-go="workovers"><span class="ico">⚙</span>Work</button>
+    <button data-go="tankgauges"><span class="ico">▰</span>Tanks</button>
+    <button data-more="1"><span class="ico">•••</span>More</button>
+  </div>
 </div>
 <div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION='1.15';
+const APP_VERSION='1.16';
 
 const OFFLINE_DB='legacy-oilfield-offline-v1', OFFLINE_STORE='pending_mutations', OFFLINE_CACHE='reference_cache';
 let offlineDbPromise=null, syncBusy=false;
@@ -190,7 +228,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let me=null, profile=null, current='dashboard', refs={leases:[],wells:[],contractors:[],tanks:[],removalTypes:[],purchasers:[]};
 let activeTankLeaseKey=null;
 const modules=[
- ['dashboard','Dashboard'],['status','Daily Operations'],['workovers','Workovers'],['incidents','Incidents / Spills'],['acid','Acid Jobs'],['chemical','Chemical Treatments'],['tankgauges','Tank Gauges'],['reports','Reports'],['equipment','Equipment'],['wells','Well Master'],['contractors','Contractors'],['admin','Users / Access']
+ ['dashboard','Dashboard'],['currentwork','Current Work'],['status','Daily Operations'],['workovers','Workovers'],['incidents','Incidents / Spills'],['acid','Acid Jobs'],['chemical','Chemical Treatments'],['tankgauges','Tank Gauges'],['reports','Reports'],['equipment','Equipment'],['wells','Well Master'],['contractors','Contractors'],['admin','Users / Access']
 ];
 const $=s=>document.querySelector(s); function statusChip(text){return `<span class="statuschip">${esc(text)}</span>`;}
 function breadcrumb(parts=[]){return `<div class="breadcrumb">${parts.map((p,i)=>`${i?'<span class="sep">›</span>':''}<span>${esc(p)}</span>`).join('')}</div>`;}
@@ -218,24 +256,48 @@ async function loadRefs(){
 }
 function leaseNameFrom(leases,id){return leases.find(x=>x.id===id)?.name||''}
 function renderNav(){const nav=$('#nav');nav.innerHTML='';for(const [id,label] of modules){if(id==='admin'&&profile?.role!=='admin')continue;const b=document.createElement('button');b.textContent=label;b.className=current===id?'active':'';b.onclick=()=>go(id,false);nav.appendChild(b)}}
-async function go(id,preserveSubView=false){current=id;if((id==='tankgauges'||id==='oil')&&!preserveSubView)activeTankLeaseKey=null;renderNav();$('#pageTitle').textContent=modules.find(x=>x[0]===id)?.[1]||id;$('#content').innerHTML='<div class="panel">Loading…</div>';await loadRefs();if(id==='dashboard')return dashboard();if(id==='status')return listStatus();if(id==='workovers')return listWorkovers();if(id==='incidents')return listIncidents();if(id==='acid')return listAcid();if(id==='chemical')return listChemical();if(id==='oil')return listTankGauges();if(id==='tankgauges')return listTankGauges();if(id==='reports')return reportsHome();if(id==='equipment')return listEquipment();if(id==='wells')return listWells();if(id==='contractors')return listContractors();if(id==='admin')return listUsers()}
-function table(headers,rows){return `<div class="tablewrap"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}" class="empty">No records yet.</td></tr>`}</tbody></table></div>`}
+async function go(id,preserveSubView=false){current=id;updateBottomNav();if((id==='tankgauges'||id==='oil')&&!preserveSubView)activeTankLeaseKey=null;renderNav();$('#pageTitle').textContent=modules.find(x=>x[0]===id)?.[1]||id;$('#content').innerHTML='<div class="panel">Loading…</div>';await loadRefs();if(id==='dashboard')return dashboard();if(id==='currentwork')return currentWork();if(id==='status')return listStatus();if(id==='workovers')return listWorkovers();if(id==='incidents')return listIncidents();if(id==='acid')return listAcid();if(id==='chemical')return listChemical();if(id==='oil')return listTankGauges();if(id==='tankgauges')return listTankGauges();if(id==='reports')return reportsHome();if(id==='equipment')return listEquipment();if(id==='wells')return listWells();if(id==='contractors')return listContractors();if(id==='admin')return listUsers()}
+function table(headers,rows){return `<div class="tablewrap desktopTable"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}" class="empty">No records yet.</td></tr>`}</tbody></table></div>`}
 function openModal(title,body,onSave){const m=$('#modal');m.innerHTML=`<div class="modalbox"><div class="modalhead"><h2 style="margin:0">${esc(title)}</h2><button class="btn" id="closeModal">Close</button></div><form id="modalForm">${body}<div class="actions"><button class="btn" type="button" id="cancelModal">Cancel</button><button class="btn primary" type="submit">Save</button></div></form></div>`;m.classList.remove('hidden');$('#closeModal').onclick=$('#cancelModal').onclick=()=>m.classList.add('hidden');$('#modalForm').onsubmit=async e=>{e.preventDefault();try{await onSave(new FormData(e.target));m.classList.add('hidden');toast('Saved');await go(current,true)}catch(err){toast(err.message||String(err))}}}
 function options(items,val,label){return `<option value="">Select…</option>`+items.map(x=>`<option value="${x[val]}">${esc(label(x))}</option>`).join('')}
+
+function mobileCards(items=[]){return '<div class="mobilecards">'+(items.length?items.join(''):'<div class="empty">No records yet.</div>')+'</div>'}
+function setupGlobalSearch(){
+ const q=$('#globalWellSearch'),box=$('#globalSearchResults');if(!q||q.dataset.ready)return;q.dataset.ready='1';
+ q.oninput=()=>{const s=q.value.trim().toLowerCase();if(!s){box.classList.add('hidden');return}const hits=refs.wells.filter(w=>wellName(w.id).toLowerCase().includes(s)||String(w.api_number||'').toLowerCase().includes(s)).slice(0,12);box.innerHTML=hits.length?hits.map(w=>'<button class="searchresult" data-well="'+w.id+'"><b>'+esc(wellName(w.id))+'</b><small>'+esc(w.current_status||'No current status')+(w.reason_down?' • '+esc(w.reason_down):'')+'</small></button>').join(''):'<div class="empty">No matching wells.</div>';box.classList.remove('hidden');box.querySelectorAll('[data-well]').forEach(b=>b.onclick=()=>{q.value='';box.classList.add('hidden');go('wells').then(()=>openWellDetail(b.dataset.well))})};
+ document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))box.classList.add('hidden')});
+}
+function setupBottomNav(){
+ const n=$('#bottomnav');if(!n||n.dataset.ready)return;n.dataset.ready='1';
+ n.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+ n.querySelector('[data-more]').onclick=()=>{const items=modules.filter(x=>!['dashboard','status','workovers','tankgauges'].includes(x[0])&&!(x[0]==='admin'&&profile?.role!=='admin'));const m=$('#modal');m.innerHTML='<div class="modalbox"><div class="modalhead"><h2 style="margin:0">More</h2><button class="btn" id="closeMore">Close</button></div><div class="opsgrid">'+items.map(x=>'<button class="btn" style="min-height:54px" data-morego="'+x[0]+'">'+esc(x[1])+'</button>').join('')+'</div></div>';m.classList.remove('hidden');$('#closeMore').onclick=()=>m.classList.add('hidden');m.querySelectorAll('[data-morego]').forEach(b=>b.onclick=()=>{m.classList.add('hidden');go(b.dataset.morego)})};
+}
+function updateBottomNav(){document.querySelectorAll('#bottomnav [data-go]').forEach(b=>b.classList.toggle('active',b.dataset.go===current))}
+async function currentWork(){
+ const [{data:status=[]},{data:wos=[]}]=await Promise.all([sb.from('status_events').select('*').order('event_at',{ascending:false}).limit(500),sb.from('workovers').select('*').order('rig_move_in_at',{ascending:false})]);
+ const latest={};status.forEach(x=>{if(!latest[x.well_id])latest[x.well_id]=x});
+ const waiting=Object.values(latest).filter(x=>/waiting on pulling/i.test(x.status||'')), down=Object.values(latest).filter(x=>/down|repair|shut-in/i.test(x.status||'')), active=wos.filter(x=>!x.returned_to_production_at&&!['final'].includes(String(x.state||'').toLowerCase()));
+ const cards=(title,arr,type)=>'<div class="panel"><div class="sectiontitle"><h2 style="margin:0">'+title+'</h2><span class="badge">'+arr.length+'</span></div>'+(arr.length?arr.map(x=>{const wid=x.well_id;return '<div class="recordcard"><div class="rc-title">'+esc(wellName(wid))+'</div><div class="rc-meta">'+(type==='wo'?esc(x.reason_for_pulling||x.state||'Active workover'):esc(x.status||'')+(x.observation?' • '+esc(x.observation):''))+'</div><div class="rc-actions"><button class="btn openCurrentWell" data-id="'+wid+'">Open Well</button>'+(type==='wo'?'<button class="btn primary openCurrentWO" data-id="'+x.id+'">Workover</button>':'<button class="btn primary quickStatus" data-id="'+wid+'">Update</button>')+'</div></div>'}).join(''):'<div class="empty">Nothing here.</div>')+'</div>';
+ $('#content').innerHTML='<div class="quickbar"><button class="btn primary" id="cwStatus">New Status</button><button class="btn" id="cwWO">New Workover</button></div><div class="opsgrid">'+cards('Waiting on Pulling Unit',waiting,'status')+cards('Active Workovers',active,'wo')+cards('Down / Repair',down,'status')+'</div>';
+ document.querySelectorAll('.openCurrentWell').forEach(b=>b.onclick=()=>go('wells').then(()=>openWellDetail(b.dataset.id)));
+ document.querySelectorAll('.openCurrentWO').forEach(b=>b.onclick=()=>editWorkover(b.dataset.id));
+ document.querySelectorAll('.quickStatus').forEach(b=>b.onclick=()=>openModal('Update well status',statusForm({well_id:b.dataset.id,data_quality:'reported'}),async f=>{const o=statusPayload(f);o.created_by=me.id;const {error}=await sb.from('status_events').insert(o);if(error)throw error}));
+ $('#cwStatus').onclick=()=>go('status').then(()=>$('#newS')?.click());$('#cwWO').onclick=()=>go('workovers').then(()=>$('#newW')?.click());
+}
+
 async function dashboard(){
- const [wo,inc,oil,stat]=await Promise.all([
-  sb.from('workovers').select('id,state',{count:'exact',head:true}),
-  sb.from('incidents').select('id,operational_status',{count:'exact',head:true}),
-  sb.from('oil_sales_pickups').select('id',{count:'exact',head:true}).is('deleted_at',null).eq('status','awaiting_pickup'),
-  sb.from('status_events').select('id',{count:'exact',head:true})
+ const [{data:status=[]},{data:wos=[]},{data:pickups=[]},{data:incs=[]}]=await Promise.all([
+  sb.from('status_events').select('*').order('event_at',{ascending:false}).limit(500),
+  sb.from('workovers').select('*').order('rig_move_in_at',{ascending:false}),
+  sb.from('oil_sales_pickups').select('*').is('deleted_at',null).eq('status','awaiting_pickup'),
+  sb.from('incidents').select('*').order('created_at',{ascending:false})
  ]);
- $('#content').innerHTML=`<div class="grid">
- <div class="card metric clickable dashMetric" data-kind="workovers"><div class="label">Workovers</div><div class="value">${wo.count||0}</div><div class="hint">Tap to see records</div></div>
- <div class="card metric clickable dashMetric" data-kind="incidents"><div class="label">Incidents</div><div class="value">${inc.count||0}</div><div class="hint">Tap to see records</div></div>
- <div class="card metric clickable dashMetric" data-kind="tanks"><div class="label">Tanks Awaiting Pickup</div><div class="value">${oil.count||0}</div><div class="hint">Tap to see which tanks</div></div>
- <div class="card metric clickable dashMetric" data-kind="status"><div class="label">Status Events</div><div class="value">${stat.count||0}</div><div class="hint">Tap to see records</div></div>
- </div><div class="panel" style="margin-top:16px"><h2>Operations system</h2><div class="notice">Persistent Supabase storage is connected. Operational changes are subject to database RLS and audit history.</div><div class="two"><div><b>Current role</b><div class="muted">${esc(profile.role_label||profile.role)}</div></div><div><b>Well master records</b><div class="muted">${refs.wells.length} wells loaded</div></div></div></div>`;
+ const latest={};status.forEach(x=>{if(!latest[x.well_id])latest[x.well_id]=x});
+ const lv=Object.values(latest),down=lv.filter(x=>/down|shut-in|repair/i.test(x.status||'')),waiting=lv.filter(x=>/waiting on pulling/i.test(x.status||'')),follow=lv.filter(x=>x.follow_up_required),active=wos.filter(x=>!x.returned_to_production_at&&String(x.state||'').toLowerCase()!=='final'),openInc=incs.filter(x=>!/(closed|final|complete)/i.test(x.operational_status||''));
+ const metric=(label,value,kind,cls='')=>'<div class="card metric clickable dashMetric attn '+cls+'" data-kind="'+kind+'"><div class="label">'+label+'</div><div class="value">'+value+'</div><div class="hint">Tap to review</div></div>';
+ $('#content').innerHTML='<div class="quickbar"><button class="btn primary" id="dashStatus">Update Well</button><button class="btn" id="dashWork">Current Work</button><button class="btn" id="dashGauge">Enter Tank Gauge</button><button class="btn" id="dashWeekly">Weekly Summary</button></div><div class="grid">'+metric('Wells Down / Repair',down.length,'status','bad')+metric('Waiting on Pulling Unit',waiting.length,'status')+metric('Active Workovers',active.length,'workovers')+metric('Follow-ups',follow.length,'status')+metric('Tanks Awaiting Pickup',pickups.length,'tanks')+metric('Open Incidents',openInc.length,'incidents','bad')+'</div><div class="panel" style="margin-top:16px"><div class="sectiontitle"><h2 style="margin:0">Current Operations</h2><button class="btn" id="dashCurrentWork">Open Work Board</button></div><div class="small muted">CrudeForce highlights work needing attention instead of making you count database records for sport.</div></div>';
  document.querySelectorAll('.dashMetric').forEach(x=>x.onclick=()=>openDashboardDetail(x.dataset.kind));
+ $('#dashStatus').onclick=()=>go('status').then(()=>$('#newS')?.click());$('#dashWork').onclick=$('#dashCurrentWork').onclick=()=>go('currentwork');$('#dashGauge').onclick=()=>go('tankgauges');$('#dashWeekly').onclick=()=>go('reports');
 }
 async function openDashboardDetail(kind){
  let title='',body='';
@@ -1179,7 +1241,7 @@ async function recordReport(kind){
 }
 function detailTable(obj,fields){return table(['Field','Information'],fields.map(([k,l,fmt])=>`<tr><td><b>${esc(l)}</b></td><td>${fmt?fmt(obj[k],obj):esc(obj[k]??'')}</td></tr>`))}
 async function acidReportDetail(id){const {data:x,error}=await sb.from('acid_jobs').select('*').eq('id',id).single();if(error)return toast(error.message);$('#content').innerHTML=`<div class="panel"><div class="toolbar"><button class="btn" onclick="recordReport('acid')">← Back to Results</button></div><h2>${esc(wellName(x.well_id))} • Acid Job</h2>${detailTable(x,[['started_at','Started',v=>v?new Date(v).toLocaleString():''],['finished_at','Finished',v=>v?new Date(v).toLocaleString():''],['treatment_objective','Treatment Objective'],['reason_observation','Reason / Observation'],['suspected_problem','Suspected Problem'],['acid_type','Acid Type'],['acid_concentration_pct','Acid Concentration %'],['acid_volume_gal','Acid Volume gal'],['additives','Additives'],['preflush','Preflush'],['afterflush','Afterflush'],['planned_procedure','Planned Procedure'],['actual_procedure','Actual Procedure'],['planned_rate_bpm','Planned Rate BPM'],['planned_pressure_limit_psi','Pressure Limit PSI'],['soak_minutes','Soak Minutes'],['observations','Observations'],['outcome','Outcome'],['narrative_summary','After-Action Summary']])}<div class="toolbar"><button class="btn" onclick="recordReport('acid')">← Back to Results</button><button class="btn primary" onclick="window.print()">Print / Save PDF</button></div></div>`}
-async function workoverReportDetail(id){const [{data:x,error},{data:logs=[]}]=await Promise.all([sb.from('workovers').select('*').eq('id',id).single(),sb.from('workover_daily_logs').select('*').eq('workover_id',id).order('work_date',{ascending:true})]);if(error)return toast(error.message);const fieldHours=logs.reduce((n,l)=>n+(Number(hoursBetween(l.work_start_at,l.work_stop_at))||0),0),ticketHours=logs.reduce((n,l)=>n+Number(l.contractor_ticket_hours||0),0),variance=ticketHours-fieldHours;const logRows=logs.map(l=>`<tr><td>${esc(l.work_date)}</td><td>${l.work_start_at?new Date(l.work_start_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</td><td>${l.work_stop_at?new Date(l.work_stop_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</td><td>${esc(hoursBetween(l.work_start_at,l.work_stop_at))}</td><td>${esc(l.personnel_count??'')}</td><td>${esc(l.contractor_ticket_number||'')}</td><td>${l.contractor_ticket_hours==null?'':Number(l.contractor_ticket_hours).toFixed(2)}</td><td>${esc(l.notes||'')}${l.billing_notes?`<br><span class="small muted">Billing: ${esc(l.billing_notes)}</span>`:''}</td></tr>`);const back=current==='workovers'?'listWorkovers()':"recordReport('workovers')";$('#content').innerHTML=`<div class="panel"><div class="toolbar"><button class="btn" onclick="${back}">← Back</button></div><div class="reportBrand"><h2>Legacy Petroleum Workover Ticket • ${esc(wellName(x.well_id))}</h2><div class="small">${esc(contractorName(x.contractor_id))} • CrudeForce v1.15</div></div>${detailTable(x,[['state','Record State'],['rig_move_in_at','Rig Move-In',v=>v?new Date(v).toLocaleString():''],['rig_move_out_at','Rig Move-Out',v=>v?new Date(v).toLocaleString():''],['returned_to_production_at','Returned to Production',v=>v?new Date(v).toLocaleString():''],['reason_for_pulling','Reason for Pulling'],['pre_workover_observation','Pre-Workover Observation'],['suspected_problem','Suspected Problem'],['actual_findings','Actual Findings'],['failure_location','Failure Location'],['repair_work','Work Performed'],['rods_pulled','Rods Pulled'],['rods_run','Rods Run'],['rods_replaced','Rods Replaced'],['rods_bad','Rods Bad'],['tubing_joints_pulled','Tubing Joints Pulled'],['tubing_joints_run','Tubing Joints Run'],['tubing_joints_replaced','Tubing Joints Replaced'],['tubing_joints_bad','Tubing Joints Bad'],['tubing_test_result','Tubing Test'],['tubing_test_pressure_psi','Test Pressure PSI'],['pump_removed','Pump Removed'],['pump_installed','Pump Installed / Rerun'],['pump_status','Pump Status'],['safety_meeting_topic','Safety Meeting'],['narrative_summary','Summary']])}<h3>Daily Rig Activity / Time Verification</h3>${logRows.length?table(['Date','Start','Stop','Field Hours','Hands','Ticket #','Ticket Hours','Work / Notes'],logRows):'<div class="empty">No daily rig logs recorded.</div>'}<div class="notice"><b>Documented field hours:</b> ${fieldHours.toFixed(2)} • <b>Contractor ticket hours:</b> ${ticketHours.toFixed(2)} • <b>Variance:</b> ${variance>=0?'+':''}${variance.toFixed(2)} hr</div><div class="toolbar"><button class="btn" onclick="${back}">← Back</button><button class="btn primary" onclick="window.print()">Print / Save PDF</button></div></div>`}
+async function workoverReportDetail(id){const [{data:x,error},{data:logs=[]}]=await Promise.all([sb.from('workovers').select('*').eq('id',id).single(),sb.from('workover_daily_logs').select('*').eq('workover_id',id).order('work_date',{ascending:true})]);if(error)return toast(error.message);const fieldHours=logs.reduce((n,l)=>n+(Number(hoursBetween(l.work_start_at,l.work_stop_at))||0),0),ticketHours=logs.reduce((n,l)=>n+Number(l.contractor_ticket_hours||0),0),variance=ticketHours-fieldHours;const logRows=logs.map(l=>`<tr><td>${esc(l.work_date)}</td><td>${l.work_start_at?new Date(l.work_start_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</td><td>${l.work_stop_at?new Date(l.work_stop_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</td><td>${esc(hoursBetween(l.work_start_at,l.work_stop_at))}</td><td>${esc(l.personnel_count??'')}</td><td>${esc(l.contractor_ticket_number||'')}</td><td>${l.contractor_ticket_hours==null?'':Number(l.contractor_ticket_hours).toFixed(2)}</td><td>${esc(l.notes||'')}${l.billing_notes?`<br><span class="small muted">Billing: ${esc(l.billing_notes)}</span>`:''}</td></tr>`);const back=current==='workovers'?'listWorkovers()':"recordReport('workovers')";$('#content').innerHTML=`<div class="panel"><div class="toolbar"><button class="btn" onclick="${back}">← Back</button></div><div class="reportBrand"><h2>Legacy Petroleum Workover Ticket • ${esc(wellName(x.well_id))}</h2><div class="small">${esc(contractorName(x.contractor_id))} • CrudeForce v1.16</div></div>${detailTable(x,[['state','Record State'],['rig_move_in_at','Rig Move-In',v=>v?new Date(v).toLocaleString():''],['rig_move_out_at','Rig Move-Out',v=>v?new Date(v).toLocaleString():''],['returned_to_production_at','Returned to Production',v=>v?new Date(v).toLocaleString():''],['reason_for_pulling','Reason for Pulling'],['pre_workover_observation','Pre-Workover Observation'],['suspected_problem','Suspected Problem'],['actual_findings','Actual Findings'],['failure_location','Failure Location'],['repair_work','Work Performed'],['rods_pulled','Rods Pulled'],['rods_run','Rods Run'],['rods_replaced','Rods Replaced'],['rods_bad','Rods Bad'],['tubing_joints_pulled','Tubing Joints Pulled'],['tubing_joints_run','Tubing Joints Run'],['tubing_joints_replaced','Tubing Joints Replaced'],['tubing_joints_bad','Tubing Joints Bad'],['tubing_test_result','Tubing Test'],['tubing_test_pressure_psi','Test Pressure PSI'],['pump_removed','Pump Removed'],['pump_installed','Pump Installed / Rerun'],['pump_status','Pump Status'],['safety_meeting_topic','Safety Meeting'],['narrative_summary','Summary']])}<h3>Daily Rig Activity / Time Verification</h3>${logRows.length?table(['Date','Start','Stop','Field Hours','Hands','Ticket #','Ticket Hours','Work / Notes'],logRows):'<div class="empty">No daily rig logs recorded.</div>'}<div class="notice"><b>Documented field hours:</b> ${fieldHours.toFixed(2)} • <b>Contractor ticket hours:</b> ${ticketHours.toFixed(2)} • <b>Variance:</b> ${variance>=0?'+':''}${variance.toFixed(2)} hr</div><div class="toolbar"><button class="btn" onclick="${back}">← Back</button><button class="btn primary" onclick="window.print()">Print / Save PDF</button></div></div>`}
 }
 async function chemicalReportDetail(id){const {data:x,error}=await sb.from('chemical_treatments').select('*').eq('id',id).single();if(error)return toast(error.message);$('#content').innerHTML=`<div class="panel"><div class="toolbar"><button class="btn" onclick="recordReport('chemical')">← Back to Results</button></div><h2>${esc(x.well_id?wellName(x.well_id):leaseName(x.lease_id))} • Chemical Treatment</h2>${detailTable(x,[['treatment_at','Treatment Date',v=>v?new Date(v).toLocaleString():''],['target_type','Target Type'],['target_description','Target'],['route_method','Route / Method'],['chemical_product','Chemical'],['quantity','Quantity',v=>`${esc(v??'')} ${esc(x.quantity_unit||'')}`],['duration_minutes','Duration Minutes'],['treatment_method','Treatment Method'],['notes','Notes'],['state','Status']])}<div class="toolbar"><button class="btn" onclick="recordReport('chemical')">← Back to Results</button><button class="btn primary" onclick="window.print()">Print / Save PDF</button></div></div>`}
 async function operationsReport(){
@@ -1270,7 +1332,7 @@ loadRememberedEmail();
 $('#authForm').onsubmit=async e=>{e.preventDefault();saveRememberedEmail();const {error}=await sb.auth.signInWithPassword({email:$('#authEmail').value.trim(),password:$('#authPassword').value});if(error)toast(error.message)};
 $('#signupBtn').onclick=async()=>{saveRememberedEmail();const {error}=await sb.auth.signUp({email:$('#authEmail').value.trim(),password:$('#authPassword').value});if(error)toast(error.message);else toast('Account created. Check email if confirmation is enabled.')};
 $('#signout').onclick=()=>sb.auth.signOut();
-async function sessionChanged(session){if(!session){me=profile=null;$('#auth').classList.remove('hidden');$('#app').classList.add('hidden');return}me=session.user;$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');await loadProfile();await loadRefs();renderNav();await go(current)}
+async function sessionChanged(session){setupGlobalSearch();setupBottomNav();if(!session){me=profile=null;$('#auth').classList.remove('hidden');$('#app').classList.add('hidden');return}me=session.user;$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');await loadProfile();await loadRefs();renderNav();await go(current)}
 sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>sessionChanged(s),0));sb.auth.getSession().then(({data})=>sessionChanged(data.session));
 if('serviceWorker' in navigator) window.addEventListener('load',async()=>{
   try{
