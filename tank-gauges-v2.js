@@ -1,51 +1,19 @@
-/* CrudeForce Tank Gauges v2 - self-contained rebuild */
-(()=>{
-'use strict';
-const api=window.CrudeForceTankAPI||{}, sb=api.sb;
-const $=s=>document.querySelector(s);
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const key=t=>String(t.lease_name||'')+'|||'+String(t.lease_number||'');
-const label=k=>{const [n,num]=k.split('|||');return n+(num?' #'+num:'')};
-const fmt=d=>d?new Date(d).toLocaleString():'No gauge recorded';
-let state={tanks:[],gauges:[],sales:[],adjustments:[]};
-function content(){return $('#content')}
-function notice(msg){content().innerHTML='<div class="panel"><div class="notice">'+esc(msg)+'</div></div>'}
-async function load(){
- if(!sb)throw new Error('Tank data connection unavailable');
- const [t,g,s,a]=await Promise.all([
-  sb.from('tanks').select('*').eq('active',true).order('lease_name').order('display_order').order('tank_number'),
-  sb.from('tank_gauges').select('*').order('gauged_at',{ascending:false}).limit(1000),
-  sb.from('oil_sales_pickups').select('*').is('deleted_at',null).order('called_in_at',{ascending:false}).limit(500),
-  sb.from('tank_adjustments').select('*').eq('alert_active',true).order('adjustment_at',{ascending:false}).limit(500)
- ]);
- for(const r of [t,g,s,a])if(r.error)throw r.error;
- state={tanks:t.data||[],gauges:g.data||[],sales:s.data||[],adjustments:a.data||[]};
-}
-function latestGauge(tid){return state.gauges.find(g=>g.tank_id===tid)}
-function leaseSummary(tanks){
- let total=0,known=0,latest=null,waiting=0,turned=0;
- const ids=new Set(tanks.map(t=>t.id));
- for(const t of tanks){const g=latestGauge(t.id);if(g){known++;total+=Number(g.calculated_bbl||0);if(!latest||new Date(g.gauged_at)>new Date(latest))latest=g.gauged_at}}
- for(const x of state.sales){if(x.tank_id&&ids.has(x.tank_id)&&x.status!=='picked_up')waiting++}
- for(const x of state.adjustments){if(ids.has(x.tank_id))turned++}
- return {total,known,latest,waiting,turned};
-}
-function renderLanding(){
- const groups=new Map();for(const t of state.tanks){const k=key(t);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(t)}
- const cards=[...groups.entries()].map(([k,ts])=>{const x=leaseSummary(ts);return '<button class="panel" data-tank-lease="'+encodeURIComponent(k)+'" style="width:100%;text-align:left;margin-bottom:12px"><h3 style="margin:0 0 8px">'+esc(label(k))+'</h3><div class="muted">'+ts.length+' tank'+(ts.length===1?'':'s')+' • '+x.known+' gauged • '+x.total.toFixed(2)+' bbl</div><div class="muted" style="margin-top:4px">'+esc(fmt(x.latest))+(x.waiting?' • '+x.waiting+' awaiting pickup':'')+(x.turned?' • '+x.turned+' turn-down alert':'')+'</div></button>'}).join('');
- content().innerHTML='<div class="panel"><div class="toolbar" style="justify-content:space-between"><div><h2 style="margin:0">Tank Gauges</h2><div class="muted">Clean rebuild • live tank data</div></div><button class="btn" id="tankRefresh">Refresh</button></div></div><div style="height:12px"></div>'+(cards||'<div class="panel">No active tanks found.</div>');
- $('#tankRefresh').onclick=()=>window.listTankGauges();
- document.querySelectorAll('[data-tank-lease]').forEach(b=>b.onclick=()=>renderLease(decodeURIComponent(b.dataset.tankLease)));
-}
-function renderLease(k){
- const ts=state.tanks.filter(t=>key(t)===k);
- const rows=ts.map(t=>{const g=latestGauge(t.id);const sales=state.sales.filter(x=>x.tank_id===t.id&&x.status!=='picked_up').length;const alerts=state.adjustments.filter(x=>x.tank_id===t.id).length;return '<div class="panel" style="margin-bottom:10px"><h3 style="margin:0 0 8px">Tank '+esc(t.tank_number)+'</h3><div><strong>'+(g?Number(g.calculated_bbl||0).toFixed(2):'—')+' bbl</strong></div><div class="muted">'+esc(fmt(g?.gauged_at))+' • Multiplier '+esc(t.multiplier??'—')+(t.capacity_bbl?' • Capacity '+esc(t.capacity_bbl)+' bbl':'')+'</div>'+(sales?'<div class="notice" style="margin-top:8px">'+sales+' pickup awaiting completion</div>':'')+(alerts?'<div class="notice" style="margin-top:8px">'+alerts+' active turn-down alert</div>':'')+'</div>'}).join('');
- content().innerHTML='<div class="panel"><div class="toolbar"><button class="btn" id="tankBack">← Leases</button><h2 style="margin:0">'+esc(label(k))+'</h2></div></div><div style="height:12px"></div>'+rows;
- $('#tankBack').onclick=renderLanding;
-}
-window.renderTankGaugeLanding=renderLanding;
-window.listTankGauges=async function(){
- content().innerHTML='<div class="panel">Loading tank data…</div>';
- try{await load();renderLanding()}catch(e){console.error('Tank v2 load failed',e);notice('Tank load failed: '+(e.message||String(e)))}
-};
+/* CrudeForce Tank Gauges v3 - read/write field module */
+(()=>{'use strict';
+const sb=window.CrudeForceTankAPI?.sb,$=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])),key=t=>String(t.lease_name||'')+'|||'+String(t.lease_number||''),label=k=>{const [n,x]=k.split('|||');return n+(x?' #'+x:'')},localDT=()=>{const d=new Date(Date.now()-new Date().getTimezoneOffset()*60000);return d.toISOString().slice(0,16)};
+let S={tanks:[],gauges:[],sales:[],adjustments:[]};
+const C=()=>$('#content'),latest=id=>S.gauges.find(x=>x.tank_id===id),tank=id=>S.tanks.find(x=>x.id===id);
+async function load(){const [t,g,s,a]=await Promise.all([sb.from('tanks').select('*').eq('active',true).order('lease_name').order('display_order').order('tank_number'),sb.from('tank_gauges').select('*').order('gauged_at',{ascending:false}).limit(1000),sb.from('oil_sales_pickups').select('*').is('deleted_at',null).order('created_at',{ascending:false}).limit(500),sb.from('tank_adjustments').select('*').eq('alert_active',true).order('adjustment_at',{ascending:false}).limit(500)]);for(const x of[t,g,s,a])if(x.error)throw x.error;S={tanks:t.data||[],gauges:g.data||[],sales:s.data||[],adjustments:a.data||[]}}
+function actions(){return '<div class="toolbar" style="margin-top:12px"><button class="btn primary" id="newGauge">+ Tank Gauge</button><button class="btn primary" id="newRun">+ Run Ticket</button><button class="btn" id="tankRefresh">Refresh</button></div>'}
+function bindActions(){if($('#newGauge'))$('#newGauge').onclick=()=>gaugeForm();if($('#newRun'))$('#newRun').onclick=()=>runForm();if($('#tankRefresh'))$('#tankRefresh').onclick=list}
+function landing(){const groups=new Map();S.tanks.forEach(t=>{const k=key(t);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(t)});const cards=[...groups].map(([k,ts])=>{let total=0,n=0;ts.forEach(t=>{const g=latest(t.id);if(g){n++;total+=Number(g.calculated_bbl||0)}});return '<button class="panel" data-lease="'+encodeURIComponent(k)+'" style="width:100%;text-align:left;margin-bottom:10px"><h3>'+esc(label(k))+'</h3><div class="muted">'+ts.length+' tanks • '+n+' gauged • '+total.toFixed(2)+' bbl</div></button>'}).join('');C().innerHTML='<div class="panel"><h2 style="margin:0">Tank Gauges & Run Tickets</h2><div class="muted">Field entry and live tank data</div>'+actions()+'</div><div style="height:12px"></div>'+cards;bindActions();document.querySelectorAll('[data-lease]').forEach(b=>b.onclick=()=>leaseView(decodeURIComponent(b.dataset.lease)))}
+function leaseView(k){const ts=S.tanks.filter(t=>key(t)===k);C().innerHTML='<div class="panel"><div class="toolbar"><button class="btn" id="back">← Leases</button><h2>'+esc(label(k))+'</h2></div>'+actions()+'</div>'+ts.map(t=>{const g=latest(t.id),runs=S.sales.filter(x=>x.tank_id===t.id&&x.status!=='picked_up').length;return '<div class="panel" style="margin-top:10px"><h3>Tank '+esc(t.tank_number)+'</h3><b>'+(g?Number(g.calculated_bbl).toFixed(2):'—')+' bbl</b><div class="muted">'+(g?new Date(g.gauged_at).toLocaleString():'No gauge')+' • Multiplier '+esc(t.multiplier)+'</div>'+(runs?'<div class="notice">'+runs+' run/pickup record(s) open</div>':'')+'</div>'}).join('');$('#back').onclick=landing;bindActions()}
+function tankOptions(sel=''){return S.tanks.map(t=>'<option value="'+t.id+'" '+(sel===t.id?'selected':'')+'>'+esc(t.lease_name+' • Tank '+t.tank_number)+'</option>').join('')}
+function gaugeForm(){C().innerHTML='<div class="panel"><div class="toolbar"><button class="btn" id="cancel">← Tanks</button><h2>New Tank Gauge</h2></div><div class="formgrid"><div class="field"><label>Tank</label><select id="gTank">'+tankOptions()+'</select></div><div class="field"><label>Gauge Date / Time</label><input id="gAt" type="datetime-local" value="'+localDT()+'"></div><div class="field"><label>Feet</label><input id="gFt" type="number" min="0" step="1" value="0"></div><div class="field"><label>Inches</label><input id="gIn" type="number" min="0" max="11.99" step="0.01" value="0"></div><div class="field"><label>Notes</label><textarea id="gNotes"></textarea></div></div><button class="btn primary" id="saveGauge">Save Gauge</button><div id="formMsg"></div></div>';$('#cancel').onclick=list;$('#saveGauge').onclick=saveGauge}
+async function saveGauge(){const t=tank($('#gTank').value),ft=Number($('#gFt').value||0),inch=Number($('#gIn').value||0);if(!t)return msg('Select a tank');if(inch<0||inch>=12)return msg('Inches must be from 0 to less than 12.');const {data:{user}}=await sb.auth.getUser();const mult=Number(t.multiplier),bbl=(ft*12+inch)*mult;const {error}=await sb.from('tank_gauges').insert({tank_id:t.id,gauged_at:new Date($('#gAt').value).toISOString(),gauge_feet:ft,gauge_inches:inch,multiplier_used:mult,calculated_bbl:bbl,notes:$('#gNotes').value||null,created_by:user?.id||null,source_kind:'manual'});if(error)return msg(error.message);await list()}
+function runForm(){C().innerHTML='<div class="panel"><div class="toolbar"><button class="btn" id="cancel">← Tanks</button><h2>New Run Ticket / Oil Pickup</h2></div><div class="formgrid"><div class="field"><label>Tank</label><select id="rTank">'+tankOptions()+'</select></div><div class="field"><label>Run Ticket #</label><input id="rTicket"></div><div class="field"><label>Purchaser</label><input id="rPurchaser"></div><div class="field"><label>Confirmation #</label><input id="rConfirm"></div><div class="field"><label>Called In</label><input id="rCalled" type="datetime-local" value="'+localDT()+'"></div><div class="field"><label>Picked Up</label><input id="rPicked" type="datetime-local"></div><div class="field"><label>Gross BBL Hauled</label><input id="rBbl" type="number" min="0" step="0.01"></div><div class="field"><label>Operator Gauge Feet</label><input id="rFt" type="number" min="0" step="1"></div><div class="field"><label>Operator Gauge Inches</label><input id="rIn" type="number" min="0" max="11.99" step="0.01"></div><div class="field"><label>Notes</label><textarea id="rNotes"></textarea></div></div><button class="btn primary" id="saveRun">Save Run Ticket</button><div id="formMsg"></div></div>';$('#cancel').onclick=list;$('#saveRun').onclick=saveRun}
+async function saveRun(){const t=tank($('#rTank').value);if(!t)return msg('Select a tank');const {data:{user}}=await sb.auth.getUser();const picked=$('#rPicked').value;const row={tank_id:t.id,tank_number:t.tank_number,purchaser:$('#rPurchaser').value||null,confirmation_number:$('#rConfirm').value||null,called_in_at:$('#rCalled').value?new Date($('#rCalled').value).toISOString():null,picked_up_at:picked?new Date(picked).toISOString():null,status:picked?'picked_up':'awaiting_pickup',notes:$('#rNotes').value||null,created_by:user?.id||null,run_ticket_number:$('#rTicket').value||null,gross_bbl_hauled:$('#rBbl').value===''?null:Number($('#rBbl').value),operator_gauge_feet:$('#rFt').value===''?null:Number($('#rFt').value),operator_gauge_inches:$('#rIn').value===''?null:Number($('#rIn').value)};const {error}=await sb.from('oil_sales_pickups').insert(row);if(error)return msg(error.message);await list()}
+function msg(x){const e=$('#formMsg');if(e)e.innerHTML='<div class="notice" style="margin-top:10px">'+esc(x)+'</div>'}
+async function list(){C().innerHTML='<div class="panel">Loading tank data…</div>';try{await load();landing()}catch(e){C().innerHTML='<div class="panel"><div class="notice">'+esc(e.message||e)+'</div></div>'}}
+window.renderTankGaugeLanding=landing;window.listTankGauges=list;window.CrudeForceTankV3={list,gaugeForm,runForm};
 })();
