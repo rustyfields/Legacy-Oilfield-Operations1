@@ -146,7 +146,7 @@ body{line-height:1.35}
 <div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION='1.16.20';
+const APP_VERSION='1.16.21';
 
 const OFFLINE_DB='legacy-oilfield-offline-v1', OFFLINE_STORE='pending_mutations', OFFLINE_CACHE='reference_cache';
 let offlineDbPromise=null, syncBusy=false;
@@ -1158,6 +1158,7 @@ async function chemicalReportDetail(id){const {data:x,error}=await sb.from('chem
 async function operationsReport(){
  const from=reportState.from+'T00:00:00',to=reportState.to+'T23:59:59.999';
  const [st,wo,inc,chem,acid,sales,logs]=await Promise.all([sb.from('status_events').select('*').gte('event_at',from).lte('event_at',to).order('event_at'),sb.from('workovers').select('*').lte('rig_move_in_at',to).or('rig_move_out_at.is.null,rig_move_out_at.gte.'+from),sb.from('incidents').select('*').gte('discovered_at',from).lte('discovered_at',to),sb.from('chemical_treatments').select('*').gte('treatment_at',from).lte('treatment_at',to),sb.from('acid_jobs').select('*').gte('started_at',from).lte('started_at',to),sb.from('oil_sales_pickups').select('*').gte('picked_up_at',from).lte('picked_up_at',to).eq('status','picked_up').is('deleted_at',null),sb.from('workover_daily_logs').select('*').gte('work_date',reportState.from).lte('work_date',reportState.to)]);
+ const queryError=[st,wo,inc,chem,acid,sales,logs].find(x=>x.error)?.error;if(queryError)throw queryError;
  const statuses=st.data||[],work=wo.data||[],rigLogs=logs.data||[];const down=statuses.filter(x=>String(x.status).toLowerCase().includes('down')||String(x.status).toLowerCase().includes('workover'));const rtp=statuses.filter(x=>x.returned_to_production_at||String(x.status).toLowerCase().includes('running'));
  const eventRows=arr=>arr.map(x=>`<tr><td>${new Date(x.event_at).toLocaleString()}</td><td>${esc(wellName(x.well_id))}</td><td>${esc(x.status)}</td><td>${esc(x.observation||x.action_taken||'')}</td></tr>`);
  const workRows=work.map(x=>{const wl=rigLogs.filter(l=>l.workover_id===x.id),hrs=wl.reduce((n,l)=>n+(Number(hoursBetween(l.work_start_at,l.work_stop_at))||0),0);return `<tr><td><button class="btn" onclick="workoverReportDetail('${x.id}')">Open</button></td><td>${esc(wellName(x.well_id))}</td><td>${badge(x.state)}</td><td>${x.rig_move_in_at?new Date(x.rig_move_in_at).toLocaleString():''}</td><td>${x.rig_move_out_at?new Date(x.rig_move_out_at).toLocaleString():'OPEN / CARRYOVER'}</td><td>${hrs.toFixed(2)}</td><td>${esc(x.actual_findings||x.reason_for_pulling||'')}</td></tr>`});
@@ -1252,7 +1253,7 @@ if('serviceWorker' in navigator) window.addEventListener('load',async()=>{
   }catch(e){console.warn('Service worker update failed',e)}
   try{
     const keys=await caches.keys();
-    await Promise.all(keys.filter(k=>k!=='crudeforce-v118').map(k=>caches.delete(k)));
+    await Promise.all(keys.filter(k=>k!=='crudeforce-v119').map(k=>caches.delete(k)));
   }catch(e){console.warn('Cache cleanup failed',e)}
 });
 
@@ -1270,10 +1271,8 @@ setTimeout(()=>refreshTurnDownAlerts(),1800);
  document.head.appendChild(s);
 })();
 </script>
-<script>window.CrudeForceMobileAPI={sb};</script><script src="/mobile-modules-v2.js?v=1.16.18"></script><script>window.CrudeForceRecoveryAPI={sb};</script><script src="/recovery-modules-v3.js?v=1.16.19"></script></body>
+<script>window.CrudeForceMobileAPI={sb};</script><script src="/mobile-modules-v2.js?v=1.16.21"></script><script>window.CrudeForceRecoveryAPI={sb};</script><script src="/recovery-modules-v3.js?v=1.16.21"></script></body>
 </html>
-
-
 
 
 
