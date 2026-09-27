@@ -79,6 +79,13 @@ body{line-height:1.35}
 
 .productionBanner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:1px solid rgba(232,111,24,.55);background:linear-gradient(135deg,#1c1e21,#292c30);border-radius:12px;padding:12px 15px;margin-bottom:14px}.productionBanner .prodTitle{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800}.productionBanner .prodValue{font-size:21px;font-weight:900}.productionBanner .prodMeta{font-size:12px;color:var(--muted)}.productionBanner .prodGroup{display:flex;gap:24px;align-items:center;flex-wrap:wrap}@media(max-width:600px){.productionBanner .prodGroup{gap:14px}.productionBanner .prodValue{font-size:18px}}
 /* dashboard visual refresh safe v1.15 - presentation only */
+.dashEyebrow{font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--accent);margin-bottom:10px}
+#content>.grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#content>.grid .metric{min-height:155px;padding:20px 22px}
+#content>.grid .metric .label{font-size:14px;color:#d7d8da}
+#content>.grid .metric .value{font-size:42px}
+#content>.grid .metric .hint{font-size:12px}
+@media(max-width:650px){#content>.grid{grid-template-columns:1fr 1fr}#content>.grid .metric{min-height:135px;padding:16px}#content>.grid .metric .value{font-size:34px}}
 body{background:radial-gradient(circle at 82% 8%,rgba(232,111,24,.07),transparent 30%),#0b0c0e}
 .sidebar{background:linear-gradient(180deg,#17191c 0%,#121416 100%);box-shadow:8px 0 28px rgba(0,0,0,.18)}
 .topbar{padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -280,10 +287,10 @@ async function dashboard(){
   sb.from('status_events').select('id',{count:'exact',head:true})
  ]);
  $('#content').innerHTML=`${productionBanner(todayProd,weekProd)}<div class="grid">
- <div class="card metric clickable dashMetric" data-kind="workovers"><div class="label">Workovers</div><div class="value">${wo.count||0}</div><div class="hint">Tap to see records</div></div>
- <div class="card metric clickable dashMetric" data-kind="incidents"><div class="label">Incidents</div><div class="value">${inc.count||0}</div><div class="hint">Tap to see records</div></div>
- <div class="card metric clickable dashMetric" data-kind="tanks"><div class="label">Tanks Awaiting Pickup</div><div class="value">${oil.count||0}</div><div class="hint">Tap to see which tanks</div></div>
- <div class="card metric clickable dashMetric" data-kind="status"><div class="label">Status Events</div><div class="value">${stat.count||0}</div><div class="hint">Tap to see records</div></div>
+ <div class="card metric clickable dashMetric" data-kind="workovers"><div class="dashEyebrow">FIELD WORK</div><div class="label">Workovers</div><div class="value">${wo.count||0}</div><div class="hint">Open workover records →</div></div>
+ <div class="card metric clickable dashMetric" data-kind="incidents"><div class="dashEyebrow">HSE</div><div class="label">Incidents & Spills</div><div class="value">${inc.count||0}</div><div class="hint">Open incident records →</div></div>
+ <div class="card metric clickable dashMetric" data-kind="tanks"><div class="dashEyebrow">OIL SALES</div><div class="label">Awaiting Pickup</div><div class="value">${oil.count||0}</div><div class="hint">Open tank call-ins →</div></div>
+ <div class="card metric clickable dashMetric" data-kind="status"><div class="dashEyebrow">WELL STATUS</div><div class="label">Status Events</div><div class="value">${stat.count||0}</div><div class="hint">Open status history →</div></div>
  </div><div class="panel" style="margin-top:16px"><h2>Operations system</h2><div class="notice">Persistent Supabase storage is connected. Operational changes are subject to database RLS and audit history.</div><div class="two"><div><b>Current role</b><div class="muted">${esc(profile.role_label||profile.role)}</div></div><div><b>Well master records</b><div class="muted">${refs.wells.length} wells loaded</div></div></div></div>`;
  document.querySelectorAll('.dashMetric').forEach(x=>x.onclick=()=>openDashboardDetail(x.dataset.kind));
 }
