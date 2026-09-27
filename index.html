@@ -109,9 +109,9 @@ body{background:radial-gradient(circle at 82% 8%,rgba(232,111,24,.07),transparen
   <div class="authbox">
     <img class="cf-login-logo" src="/crudeforce-logo.png" alt="CrudeForce">
     <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700">App v1.15 • Field Test</div>
-    <form id="authForm">
-      <div class="field"><label>Email</label><input id="authEmail" type="email" required autocomplete="username"></div>
-      <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"></div>
+    <form id="authForm" autocomplete="on">
+      <div class="field"><label>Email</label><input id="authEmail" name="username" type="email" inputmode="email" autocapitalize="none" spellcheck="false" required autocomplete="username"></div>
+      <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" name="password" type="password" minlength="6" required autocomplete="current-password"></div>
       <label class="small" style="display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--muted)"><input id="rememberEmail" type="checkbox" style="width:auto" checked> Remember email on this device</label>
       <div class="actions" style="justify-content:stretch"><button class="btn primary" style="flex:1" type="submit">Sign in</button><button id="signupBtn" class="btn" style="flex:1" type="button">Create account</button></div>
     </form>
