@@ -1,6 +1,18 @@
-/* CrudeForce Tank Gauges module v1.16.14 */
+/* CrudeForce Tank Gauges module v1.16.16 */
 function tankLeaseKey(t={}){return `${t.lease_name||''}|||${t.lease_number||''}`}
 function tankLeaseLabelFromKey(key=''){const [name,num]=key.split('|||');return `${name||''}${num?' #'+num:''}`}
+function tankGaugeStatusForLease(tanks=[]){
+ let latest=null,total=0,known=0,nearlyFull=false;
+ for(const t of tanks){const g=(tankGaugeHistoryCache[t.id]||[])[0];if(g){if(!latest||new Date(g.gauged_at)>new Date(latest))latest=g.gauged_at;total+=Number(g.calculated_bbl||0);known++;if(t.capacity_bbl!=null&&Number(t.capacity_bbl)>0&&Number(g.calculated_bbl)/Number(t.capacity_bbl)>=.9)nearlyFull=true}}
+ return {latest,total,known,nearlyFull}
+}
+function tankTransportStatusForLease(tanks=[]){
+ const ids=new Set(tanks.map(t=>t.id)),numbers=new Set(tanks.map(t=>String(t.tank_number)));
+ const open=(tankOilSalesCache||[]).filter(x=>((x.tank_id&&ids.has(x.tank_id))||(!x.tank_id&&numbers.has(String(x.tank_number))))&&x.status!=='picked_up');
+ const turnedDownIds=new Set((tankAdjustmentCache||[]).filter(x=>x.alert_active&&ids.has(x.tank_id)).map(x=>x.tank_id)),waiting=[],turned=[];
+ for(const sale of open){const t=tanks.find(x=>x.id===sale.tank_id)||tanks.find(x=>String(x.tank_number)===String(sale.tank_number));if(!t)continue;(turnedDownIds.has(t.id)?turned:waiting).push(String(t.tank_number))}
+ return {waiting:[...new Set(waiting)].sort(naturalCompare),turned:[...new Set(turned)].sort(naturalCompare)}
+}
 function renderTankLease(key){
  activeTankLeaseKey=key;
  const tanks=refs.tanks.filter(t=>t.active && tankLeaseKey(t)===key).sort((a,b)=>naturalCompare(a.tank_number,b.tank_number));
