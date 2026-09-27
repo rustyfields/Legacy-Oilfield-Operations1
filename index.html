@@ -146,7 +146,7 @@ body{line-height:1.35}
 <div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION='1.18.3';
+const APP_VERSION='1.18.4';
 
 const OFFLINE_DB='legacy-oilfield-offline-v1', OFFLINE_STORE='pending_mutations', OFFLINE_CACHE='reference_cache';
 let offlineDbPromise=null, syncBusy=false;
@@ -286,6 +286,47 @@ async function currentWork(){
  $('#cwStatus').onclick=()=>go('status').then(()=>$('#newS')?.click());$('#cwWO').onclick=()=>go('workovers').then(()=>$('#newW')?.click());
 }
 
+async function loadDashboardProduction(){
+ const todayEl=$('#dashTodayProd'),avgEl=$('#dash7Avg'),todayHint=$('#dashTodayProdHint'),avgHint=$('#dash7AvgHint');
+ if(!todayEl||!avgEl)return;
+ try{
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-14);
+  const results=await Promise.allSettled([
+   sb.from('tank_gauges').select('*').gte('gauged_at',cutoff.toISOString()).order('gauged_at'),
+   sb.from('oil_sales_pickups').select('*').is('deleted_at',null).eq('status','picked_up').gte('picked_up_at',cutoff.toISOString()),
+   sb.from('tank_adjustments').select('*').gte('adjustment_at',cutoff.toISOString())
+  ]);
+  if(results.some(r=>r.status!=='fulfilled'||r.value?.error))throw new Error('Production data unavailable');
+  const [dg,ds,da]=results.map(r=>r.value.data||[]);
+  const tanks=(refs?.tanks||[]).filter(x=>x.active!==false);
+  const dayKey=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+  const prodForDay=date=>{
+   const k=dayKey(date);let total=0,complete=0;
+   for(const t of tanks){
+    const tg=dg.filter(x=>x.tank_id===t.id).sort((a,b)=>new Date(a.gauged_at)-new Date(b.gauged_at));
+    const end=tg.filter(x=>dayKey(x.gauged_at)===k&&x.source_kind!=='run_ticket_bottom').pop();
+    if(!end)continue;
+    const begin=tg.filter(x=>new Date(x.gauged_at)<new Date(end.gauged_at)).pop();
+    if(!begin)continue;
+    const hauled=ds.filter(x=>x.tank_id===t.id&&x.picked_up_at&&new Date(x.picked_up_at)>new Date(begin.gauged_at)&&new Date(x.picked_up_at)<=new Date(end.gauged_at)).reduce((n,x)=>n+Number(x.gross_bbl_hauled||0),0);
+    const adj=da.filter(x=>x.tank_id===t.id&&['resolved','closed'].includes(String(x.status||'').toLowerCase())&&new Date(x.adjustment_at)>new Date(begin.gauged_at)&&new Date(x.adjustment_at)<=new Date(end.gauged_at)).reduce((n,x)=>n+Number(x.calculated_total_volume_change_bbl||0),0);
+    total+=Number(end.calculated_bbl||0)+hauled+adj-Number(begin.calculated_bbl||0);complete++;
+   }
+   return {total,complete};
+  };
+  const now=new Date(),today=prodForDay(now),days=[];
+  for(let n=0;n<7;n++){const d=new Date(now);d.setDate(now.getDate()-n);const p=prodForDay(d);if(p.complete)days.push(p.total)}
+  todayEl.textContent=today.complete?today.total.toFixed(2)+' bbl':'—';
+  avgEl.textContent=days.length?(days.reduce((a,b)=>a+b,0)/days.length).toFixed(2)+' BOPD':'—';
+  if(todayHint)todayHint.textContent=today.complete?'Calculated from '+today.complete+' completed tank gauge period'+(today.complete===1?'':'s'):'No completed tank gauge periods today';
+  if(avgHint)avgHint.textContent=days.length?days.length+' day'+(days.length===1?'':'s')+' with complete gauge data':'No complete gauge days in the last 7 days';
+ }catch(err){
+  console.warn('Production cards unavailable',err);
+  todayEl.textContent='—';avgEl.textContent='—';
+  if(todayHint)todayHint.textContent='Production data unavailable';
+  if(avgHint)avgHint.textContent='Production data unavailable';
+ }
+}
 async function dashboard(){
  const [{data:status=[]},{data:wos=[]},{data:pickups=[]},{data:incs=[]}]=await Promise.all([
   sb.from('status_events').select('*').order('event_at',{ascending:false}).limit(500),
@@ -296,9 +337,10 @@ async function dashboard(){
  const latest={};status.forEach(x=>{if(!latest[x.well_id])latest[x.well_id]=x});
  const lv=Object.values(latest),down=lv.filter(x=>/down|shut-in|repair/i.test(x.status||'')),waiting=lv.filter(x=>/waiting on pulling/i.test(x.status||'')),follow=lv.filter(x=>x.follow_up_required),active=wos.filter(x=>!x.returned_to_production_at&&String(x.state||'').toLowerCase()!=='final'),openInc=incs.filter(x=>!/(closed|final|complete)/i.test(x.operational_status||''));
  const metric=(label,value,kind,cls='')=>'<div class="card metric clickable dashMetric attn '+cls+'" data-kind="'+kind+'"><div class="label">'+label+'</div><div class="value">'+value+'</div><div class="hint">Tap to review</div></div>';
- $('#content').innerHTML='<div class="quickbar"><button class="btn primary" id="dashStatus">Update Well</button><button class="btn" id="dashWork">Current Work</button><button class="btn" id="dashGauge">Enter Tank Gauge</button><button class="btn" id="dashWeekly">Weekly Summary</button></div><div class="grid">'+metric('Wells Down / Repair',down.length,'status','bad')+metric('Waiting on Pulling Unit',waiting.length,'status')+metric('Active Workovers',active.length,'workovers')+metric('Follow-ups',follow.length,'status')+metric('Tanks Awaiting Pickup',pickups.length,'tanks')+metric('Open Incidents',openInc.length,'incidents','bad')+'</div><div class="panel" style="margin-top:16px"><div class="sectiontitle"><h2 style="margin:0">Current Operations</h2><button class="btn" id="dashCurrentWork">Open Work Board</button></div><div class="small muted">CrudeForce highlights work needing attention instead of making you count database records for sport.</div></div>';
+ $('#content').innerHTML='<div class="quickbar"><button class="btn primary" id="dashStatus">Update Well</button><button class="btn" id="dashWork">Current Work</button><button class="btn" id="dashGauge">Enter Tank Gauge</button><button class="btn" id="dashWeekly">Weekly Summary</button></div><div class="grid"><div class="card metric"><div class="label">Current Production</div><div class="value" id="dashTodayProd">—</div><div class="hint" id="dashTodayProdHint">Loading production separately…</div></div><div class="card metric"><div class="label">7-Day Average</div><div class="value" id="dash7Avg">—</div><div class="hint" id="dash7AvgHint">Loading production separately…</div></div>'+metric('Wells Down / Repair',down.length,'status','bad')+metric('Waiting on Pulling Unit',waiting.length,'status')+metric('Active Workovers',active.length,'workovers')+metric('Follow-ups',follow.length,'status')+metric('Tanks Awaiting Pickup',pickups.length,'tanks')+metric('Open Incidents',openInc.length,'incidents','bad')+'</div><div class="panel" style="margin-top:16px"><div class="sectiontitle"><h2 style="margin:0">Current Operations</h2><button class="btn" id="dashCurrentWork">Open Work Board</button></div><div class="small muted">CrudeForce highlights work needing attention instead of making you count database records for sport.</div></div>';
  document.querySelectorAll('.dashMetric').forEach(x=>x.onclick=()=>openDashboardDetail(x.dataset.kind));
  $('#dashStatus').onclick=()=>go('status').then(()=>$('#newS')?.click());$('#dashWork').onclick=$('#dashCurrentWork').onclick=()=>go('currentwork');$('#dashGauge').onclick=()=>go('tankgauges');$('#dashWeekly').onclick=()=>go('reports');
+ loadDashboardProduction();
 }
 async function openDashboardDetail(kind){
  let title='',body='';
