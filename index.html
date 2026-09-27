@@ -876,7 +876,7 @@ function bindRemovalTypeAdmin(){
 
 
 
-async function loadOilSaleDeleteRequests(){
+async async function loadOilSaleDeleteRequests(){
  try{
   const {data=[],error}=await sb.from('oil_sale_delete_requests').select('*').order('requested_at',{ascending:false});
   if(error)throw error;
