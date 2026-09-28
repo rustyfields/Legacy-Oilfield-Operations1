@@ -109,7 +109,7 @@ body{background:radial-gradient(circle at 82% 8%,rgba(232,111,24,.07),transparen
 <div id="auth" class="authwrap">
   <div class="authbox">
     <img class="cf-login-logo" src="/crudeforce-logo.png" alt="CrudeForce">
-    <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700">App v1.15 • Field Test</div>
+    <h1>Sign In</h1><div class="muted" style="margin-bottom:4px">Access your company’s CrudeForce account</div><div class="company-chip"><img src="/legacy-logo.png" alt=""><span><b>Legacy Petroleum</b><small>Oilfield Operations</small></span></div><div class="small" style="margin-bottom:18px;color:var(--accent);font-weight:700"><span class="appVersionLabel"></span> • Field Test</div>
     <form id="authForm" autocomplete="on">
       <div class="field"><label>Email</label><input id="authEmail" name="username" type="email" inputmode="email" autocapitalize="none" spellcheck="false" required autocomplete="username"></div>
       <div class="field" style="margin-top:10px"><label>Password</label><input id="authPassword" name="password" type="password" minlength="6" required autocomplete="current-password"></div>
@@ -122,18 +122,19 @@ body{background:radial-gradient(circle at 82% 8%,rgba(232,111,24,.07),transparen
 
 <div id="app" class="shell hidden">
   <aside class="sidebar">
-    <div class="brandrow"><img class="brandmark" src="/crudeforce-icon.png" alt=""><div class="brand">CrudeForce<small>Legacy Petroleum • v1.15</small></div></div>
+    <div class="brandrow"><img class="brandmark" src="/crudeforce-icon.png" alt=""><div class="brand">CrudeForce<small>Legacy Petroleum • <span class="appVersionLabel"></span></small></div></div>
     <nav class="nav" id="nav"></nav>
   </aside>
   <main class="main">
-    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userbox"><div id="who"></div><div class="small" style="margin-top:4px;color:var(--accent)">v1.15</div><button id="signout" class="btn" style="margin-top:6px;padding:5px 9px">Sign out</button></div></div>
+    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userbox"><div id="who"></div><div class="small appVersionLabel" style="margin-top:4px;color:var(--accent)"></div><button id="signout" class="btn" style="margin-top:6px;padding:5px 9px">Sign out</button></div></div>
     <div id="content"></div>
   </main>
 </div>
 <div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION='1.15';
+const APP_VERSION='1.16.21';
+window.addEventListener('DOMContentLoaded',()=>document.querySelectorAll('.appVersionLabel').forEach(el=>el.textContent='v'+APP_VERSION));
 
 const OFFLINE_DB='legacy-oilfield-offline-v1', OFFLINE_STORE='pending_mutations', OFFLINE_CACHE='reference_cache';
 let offlineDbPromise=null, syncBusy=false;
